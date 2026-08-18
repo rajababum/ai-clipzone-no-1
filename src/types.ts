@@ -42,8 +42,47 @@ export interface Testimonial {
 }
 
 export interface FAQItem {
+  id?: string;
   question: string;
   answer: string;
+}
+
+export interface PaymentQrConfig {
+  esewaId: string;
+  accountName: string;
+  bankName?: string;
+  bankAccountNo?: string;
+  bankBranch?: string;
+  whatsappNumber: string;
+  qrImageUrl?: string;
+  paymentInstruction?: string;
+  updatedAt?: number;
+}
+
+export interface SiteSettingsConfig {
+  siteTitle?: string;
+  siteTagline?: string;
+  instituteName?: string;
+  instituteLogoUrl?: string;
+  noticeBannerText?: string;
+  showNoticeBanner?: boolean;
+  supportEmail?: string;
+  supportPhone?: string;
+  certificateTitle?: string;
+  certificateSubtitle?: string;
+  certificateInstituteName?: string;
+  certificateLogoUrl?: string;
+  certificateDescription?: string;
+  certificateDirectorName?: string;
+  certificateDirectorTitle?: string;
+  certificateDirectorSignatureUrl?: string;
+  certificateCeoName?: string;
+  certificateCeoTitle?: string;
+  certificateCeoSignatureUrl?: string;
+  certificateTheme?: string;
+  certificateStampUrl?: string;
+  certificateSealText?: string;
+  updatedAt?: number;
 }
 
 export interface ChatMessage {

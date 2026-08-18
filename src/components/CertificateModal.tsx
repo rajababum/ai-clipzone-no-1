@@ -11,6 +11,21 @@ interface CertificateModalProps {
   courseTitle: string;
   issueDate?: string;
   certificateId?: string;
+  instituteName?: string;
+  certificateInstituteName?: string;
+  logoUrl?: string;
+  certificateTitle?: string;
+  certificateSubtitle?: string;
+  certificateDescription?: string;
+  directorName?: string;
+  directorTitle?: string;
+  directorSignatureUrl?: string;
+  ceoName?: string;
+  ceoTitle?: string;
+  ceoSignatureUrl?: string;
+  certificateTheme?: string;
+  certificateStampUrl?: string;
+  certificateSealText?: string;
   onClose: () => void;
 }
 
@@ -19,12 +34,74 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   courseTitle,
   issueDate = '2083/01/14',
   certificateId: initialCertId,
+  instituteName = 'AI Clipzone',
+  certificateInstituteName = 'AI CLIPZONE NEPAL',
+  logoUrl,
+  certificateTitle = 'CERTIFICATE',
+  certificateSubtitle = 'OF ACHIEVEMENT',
+  certificateDescription,
+  directorName = 'Director',
+  directorTitle = 'Course Director',
+  directorSignatureUrl,
+  ceoName = 'Founder/CEO (AI Clipzone)',
+  ceoTitle = 'Founder & CEO',
+  ceoSignatureUrl,
+  certificateTheme = 'gold',
+  certificateStampUrl,
+  certificateSealText,
   onClose,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+
+  const activeLogo = logoUrl && logoUrl.trim() ? logoUrl.trim() : LOGO_DATA_URL;
+
+  // Theme color palette definitions
+  const getThemeColors = (theme: string) => {
+    switch (theme) {
+      case 'cyber-purple':
+        return {
+          primary: '#c084fc',
+          secondary: '#9333ea',
+          border: '#a855f7',
+          darkBorder: '#581c87',
+          highlight: '#f3e8ff',
+          shadow: 'rgba(168, 85, 247, 0.4)',
+        };
+      case 'emerald':
+        return {
+          primary: '#34d399',
+          secondary: '#059669',
+          border: '#10b981',
+          darkBorder: '#064e3b',
+          highlight: '#d1fae5',
+          shadow: 'rgba(16, 185, 129, 0.4)',
+        };
+      case 'crimson':
+        return {
+          primary: '#fb7185',
+          secondary: '#e11d48',
+          border: '#f43f5e',
+          darkBorder: '#881337',
+          highlight: '#ffe4e6',
+          shadow: 'rgba(244, 63, 94, 0.4)',
+        };
+      case 'gold':
+      default:
+        return {
+          primary: '#e6c663',
+          secondary: '#c59b27',
+          border: '#e6c663',
+          darkBorder: '#8a6a18',
+          highlight: '#fef08a',
+          shadow: 'rgba(245, 158, 11, 0.35)',
+        };
+    }
+  };
+
+  const themeColors = getThemeColors(certificateTheme);
 
   // Stable certificate code calculation that never changes randomly on re-renders or page updates
   const [certId] = useState(() => {
@@ -285,9 +362,10 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 transform: `scale(${scale})`,
                 transformOrigin: 'top left',
                 backgroundColor: '#000000',
-                boxShadow: '0 25px 60px -15px rgba(0,0,0,0.95), inset 0 0 35px rgba(230,198,99,0.15)',
+                borderColor: themeColors.border,
+                boxShadow: `0 25px 60px -15px rgba(0,0,0,0.95), inset 0 0 35px ${themeColors.shadow}`,
               }}
-              className="absolute top-0 left-0 bg-black rounded-2xl p-9 shadow-2xl overflow-hidden border-4 border-[#c59b27] flex flex-col justify-between text-center select-none font-sans shrink-0"
+              className="absolute top-0 left-0 bg-black rounded-2xl p-9 shadow-2xl overflow-hidden border-4 flex flex-col justify-between text-center select-none font-sans shrink-0"
             >
               {/* Embedded Font Definitions for Image Capture Canvas Engine */}
               <style>{`
@@ -298,49 +376,78 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               `}</style>
 
               {/* Outer Luxury Metallic Border Multi-Layers */}
-              <div className="absolute inset-3 border-2 border-[#e6c663] rounded-lg pointer-events-none opacity-90" />
-              <div className="absolute inset-4 border border-[#8a6a18] rounded-md pointer-events-none opacity-80" />
+              <div 
+                style={{ borderColor: themeColors.primary }}
+                className="absolute inset-3 border-2 rounded-lg pointer-events-none opacity-90" 
+              />
+              <div 
+                style={{ borderColor: themeColors.darkBorder }}
+                className="absolute inset-4 border rounded-md pointer-events-none opacity-80" 
+              />
 
               {/* Corner Ornate Baroque Flourish Decorations (4 Corners) */}
-              <svg className="absolute top-3 left-3 w-16 h-16 text-[#e6c663] opacity-85 pointer-events-none z-10" viewBox="0 0 100 100" fill="currentColor">
+              <svg 
+                style={{ color: themeColors.primary }}
+                className="absolute top-3 left-3 w-16 h-16 opacity-85 pointer-events-none z-10" 
+                viewBox="0 0 100 100" 
+                fill="currentColor"
+              >
                 <path d="M10,10 L40,10 C25,10 10,25 10,40 Z M15,15 L15,50 C15,30 30,15 50,15 L15,15 Z" />
                 <circle cx="20" cy="20" r="3" />
                 <path d="M0,0 L35,0 C20,0 0,20 0,35 Z M0,0 L0,35 C0,20 20,0 35,0 Z" />
               </svg>
-              <svg className="absolute top-3 right-3 w-16 h-16 text-[#e6c663] opacity-85 pointer-events-none transform rotate-90 z-10" viewBox="0 0 100 100" fill="currentColor">
+              <svg 
+                style={{ color: themeColors.primary }}
+                className="absolute top-3 right-3 w-16 h-16 opacity-85 pointer-events-none transform rotate-90 z-10" 
+                viewBox="0 0 100 100" 
+                fill="currentColor"
+              >
                 <path d="M10,10 L40,10 C25,10 10,25 10,40 Z M15,15 L15,50 C15,30 30,15 50,15 L15,15 Z" />
                 <circle cx="20" cy="20" r="3" />
               </svg>
-              <svg className="absolute bottom-3 left-3 w-16 h-16 text-[#e6c663] opacity-85 pointer-events-none transform -rotate-90 z-10" viewBox="0 0 100 100" fill="currentColor">
+              <svg 
+                style={{ color: themeColors.primary }}
+                className="absolute bottom-3 left-3 w-16 h-16 opacity-85 pointer-events-none transform -rotate-90 z-10" 
+                viewBox="0 0 100 100" 
+                fill="currentColor"
+              >
                 <path d="M10,10 L40,10 C25,10 10,25 10,40 Z M15,15 L15,50 C15,30 30,15 50,15 L15,15 Z" />
                 <circle cx="20" cy="20" r="3" />
               </svg>
-              <svg className="absolute bottom-3 right-3 w-16 h-16 text-[#e6c663] opacity-85 pointer-events-none transform rotate-180 z-10" viewBox="0 0 100 100" fill="currentColor">
+              <svg 
+                style={{ color: themeColors.primary }}
+                className="absolute bottom-3 right-3 w-16 h-16 opacity-85 pointer-events-none transform rotate-180 z-10" 
+                viewBox="0 0 100 100" 
+                fill="currentColor"
+              >
                 <path d="M10,10 L40,10 C25,10 10,25 10,40 Z M15,15 L15,50 C15,30 30,15 50,15 L15,15 Z" />
                 <circle cx="20" cy="20" r="3" />
               </svg>
 
               {/* Background Watermark Logo */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-                <span className="cert-font-cinzel text-[160px] font-black text-[#e6c663] tracking-widest uppercase">
-                  Ai
+                <span 
+                  style={{ color: themeColors.primary }}
+                  className="cert-font-cinzel text-[160px] font-black tracking-widest uppercase truncate max-w-4xl px-4"
+                >
+                  {certificateInstituteName || instituteName || 'Ai'}
                 </span>
               </div>
 
               {/* HEADER SECTION: LOGO (TOP LEFT) & MAIN TITLE (CENTERED EQUALLY) */}
               <div className="relative z-10 flex items-center justify-between w-full px-4 pt-2">
-                {/* Official Ai Clipzone Logo - Positioned slightly rightward from corner decoration */}
+                {/* Official Institute Logo */}
                 <div className="w-72 sm:w-80 shrink-0 flex items-center justify-start pl-6 sm:pl-8 md:pl-10">
                   <div className="h-28 sm:h-32 md:h-36 flex items-center justify-start shrink-0 bg-transparent mt-1">
                     <img 
-                      src={LOGO_DATA_URL} 
-                      alt="AI Clipzone Logo"
+                      src={activeLogo} 
+                      alt={instituteName || 'Institute Logo'}
                       referrerPolicy="no-referrer"
                       loading="eager"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (target.src !== REMOTE_LOGO_URL) {
-                          target.src = REMOTE_LOGO_URL;
+                        if (target.src !== REMOTE_LOGO_URL && target.src !== LOGO_DATA_URL) {
+                          target.src = LOGO_DATA_URL;
                         }
                       }}
                       className="h-28 sm:h-32 md:h-36 w-auto max-w-[280px] sm:max-w-[340px] object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.85)]"
@@ -348,22 +455,34 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                   </div>
                 </div>
 
-                {/* CENTER TITLE: CERTIFICATE OF ACHIEVEMENT */}
+                {/* CENTER TITLE */}
                 <div className="flex-1 text-center px-1">
                   <h1
-                    className="cert-font-cinzel text-4xl sm:text-5xl font-black tracking-[0.16em] uppercase drop-shadow-md text-[#fef08a]"
-                    style={{ textShadow: '0 2px 10px rgba(245, 158, 11, 0.35)' }}
+                    style={{ 
+                      color: themeColors.highlight,
+                      textShadow: `0 2px 10px ${themeColors.shadow}` 
+                    }}
+                    className="cert-font-cinzel text-4xl sm:text-5xl font-black tracking-[0.16em] uppercase drop-shadow-md"
                   >
-                    CERTIFICATE
+                    {certificateTitle || 'CERTIFICATE'}
                   </h1>
                   <h2
-                    className="cert-font-cinzel text-sm sm:text-base font-black tracking-[0.32em] uppercase mt-1 text-[#fcd34d]"
+                    style={{ color: themeColors.primary }}
+                    className="cert-font-cinzel text-sm sm:text-base font-black tracking-[0.32em] uppercase mt-1"
                   >
-                    OF ACHIEVEMENT
+                    {certificateSubtitle || 'OF ACHIEVEMENT'}
                   </h2>
+                  {certificateInstituteName && (
+                    <p 
+                      style={{ color: themeColors.primary }}
+                      className="text-[10px] tracking-[0.25em] font-bold uppercase opacity-80 mt-0.5"
+                    >
+                      {certificateInstituteName}
+                    </p>
+                  )}
                 </div>
 
-                {/* Right Spacer to Balance Emblem Width & Maintain Pure Center Title Alignment */}
+                {/* Right Spacer to Balance Emblem Width */}
                 <div className="w-72 sm:w-80 shrink-0 pr-6 sm:pr-8 md:pr-10" />
               </div>
 
@@ -376,12 +495,12 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 {/* STUDENT CALLIGRAPHIC NAME */}
                 <div className="my-2 relative block w-full max-w-full px-4 text-center">
                   <h2
-                    className="cert-font-script text-7xl md:text-8xl font-normal tracking-wide leading-tight px-2 block mx-auto text-[#fef08a]"
+                    className="cert-font-script text-7xl md:text-8xl font-normal tracking-wide leading-tight px-2 block mx-auto"
                     style={{
                       fontFamily: "'Great Vibes', cursive",
                       fontWeight: 400,
-                      color: '#fef08a',
-                      textShadow: '0 2px 14px rgba(245, 158, 11, 0.5)',
+                      color: themeColors.highlight,
+                      textShadow: `0 2px 14px ${themeColors.shadow}`,
                     }}
                   >
                     {studentName}
@@ -389,73 +508,140 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
                   {/* Golden Horizontal Divider Line with Flourish Tips & Center Sparkle */}
                   <div className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 mt-1">
-                    <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-[#e6c663] to-[#e6c663]" />
-                    <span className="text-amber-300 text-base font-serif">♦ ✦ ♦</span>
-                    <div className="h-[2px] flex-1 bg-gradient-to-l from-transparent via-[#e6c663] to-[#e6c663]" />
+                    <div 
+                      style={{ background: `linear-gradient(to right, transparent, ${themeColors.primary})` }}
+                      className="h-[2px] flex-1" 
+                    />
+                    <span style={{ color: themeColors.highlight }} className="text-base font-serif">♦ ✦ ♦</span>
+                    <div 
+                      style={{ background: `linear-gradient(to left, transparent, ${themeColors.primary})` }}
+                      className="h-[2px] flex-1" 
+                    />
                   </div>
                 </div>
 
                 {/* ACHIEVEMENT STATEMENT */}
                 <p
-                  className="cert-font-cinzel text-base font-bold tracking-[0.25em] uppercase mt-2 text-[#fcd34d]"
+                  style={{ color: themeColors.primary }}
+                  className="cert-font-cinzel text-base font-bold tracking-[0.25em] uppercase mt-2"
                 >
                   HAS SUCCESSFULLY COMPLETED
                 </p>
 
                 {/* COURSE TITLE */}
                 <h3
-                  className="font-sans font-black text-3xl tracking-wider uppercase my-2 leading-snug max-w-3xl mx-auto px-4 text-[#fef08a]"
-                  style={{ textShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }}
+                  style={{ 
+                    color: themeColors.highlight,
+                    textShadow: `0 2px 8px ${themeColors.shadow}` 
+                  }}
+                  className="font-sans font-black text-3xl tracking-wider uppercase my-2 leading-snug max-w-3xl mx-auto px-4"
                 >
                   {cleanCourseTitle}
                 </h3>
 
                 {/* COURSE DESCRIPTION SUMMARY */}
                 <p className="text-slate-300/90 text-base font-normal max-w-2xl mx-auto leading-relaxed px-4 my-1">
-                  an advanced training in 30+ AI Tools covering AI Video Creation, AI Image Generation, AI Music & Song Creation, Graphic Design, Website Development, Professional Presentations, and other AI-powered digital skills.
+                  {certificateDescription || 'an advanced training in 30+ AI Tools covering AI Video Creation, AI Image Generation, AI Music & Song Creation, Graphic Design, Website Development, Professional Presentations, and other AI-powered digital skills.'}
                 </p>
               </div>
 
               {/* BOTTOM SIGNATURES & ISSUE DATE SECTION */}
-              <div className="relative z-10 grid grid-cols-3 items-end text-center pt-2 border-t border-amber-500/20 px-6 pb-1">
+              <div 
+                style={{ borderColor: `${themeColors.primary}33` }}
+                className="relative z-10 grid grid-cols-3 items-end text-center pt-2 border-t px-6 pb-1"
+              >
                 {/* Left Signature: Director */}
-                <div className="flex flex-col items-center">
-                  <svg className="w-40 h-12 text-[#fef08a] drop-shadow-[0_2px_8px_rgba(245,158,11,0.35)]" viewBox="0 0 180 55" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Calligraphic Executive Director Signature */}
-                    <path d="M 22 42 C 14 38, 12 12, 28 8 C 42 5, 40 38, 25 44 C 18 47, 24 24, 46 20 C 62 17, 56 36, 72 28 C 80 24, 84 32, 96 26 C 104 22, 112 30, 128 24" strokeWidth="2.4" />
-                    <path d="M 120 18 Q 138 12, 148 22 Q 132 38, 108 42 C 80 47, 130 42, 162 40" strokeWidth="1.8" />
-                    <circle cx="166" cy="39" r="1.8" fill="currentColor" />
-                  </svg>
-                  <div className="w-32 h-[1px] bg-gradient-to-r from-transparent via-amber-400 to-transparent my-1" />
-                  <span className="font-sans text-sm font-bold text-slate-200">
-                    Director
+                <div className="flex flex-col items-center justify-end">
+                  {directorSignatureUrl && directorSignatureUrl.trim() ? (
+                    <img 
+                      src={directorSignatureUrl.trim()} 
+                      alt="Director Signature" 
+                      className="h-12 w-auto max-w-[170px] object-contain drop-shadow-[0_2px_8px_rgba(245,158,11,0.35)] mx-auto"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <svg 
+                      style={{ color: themeColors.highlight }}
+                      className="w-40 h-12 drop-shadow-[0_2px_8px_rgba(245,158,11,0.35)]" 
+                      viewBox="0 0 180 55" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M 22 42 C 14 38, 12 12, 28 8 C 42 5, 40 38, 25 44 C 18 47, 24 24, 46 20 C 62 17, 56 36, 72 28 C 80 24, 84 32, 96 26 C 104 22, 112 30, 128 24" strokeWidth="2.4" />
+                      <path d="M 120 18 Q 138 12, 148 22 Q 132 38, 108 42 C 80 47, 130 42, 162 40" strokeWidth="1.8" />
+                      <circle cx="166" cy="39" r="1.8" fill="currentColor" />
+                    </svg>
+                  )}
+                  <div 
+                    style={{ background: `linear-gradient(to right, transparent, ${themeColors.primary}, transparent)` }}
+                    className="w-32 h-[1px] my-1" 
+                  />
+                  <span className="font-sans text-sm font-bold text-slate-100">
+                    {directorName || 'Director'}
+                  </span>
+                  <span style={{ color: themeColors.primary }} className="text-[10px] font-semibold uppercase tracking-wider">
+                    {directorTitle || 'Course Director'}
                   </span>
                 </div>
 
-                {/* Center: Date of Issue */}
+                {/* Center: Date of Issue & Seal */}
                 <div className="flex flex-col items-center justify-end pb-1">
-                  <span className="font-sans text-sm font-bold text-amber-300 tracking-wider">
+                  {certificateStampUrl && certificateStampUrl.trim() && (
+                    <img 
+                      src={certificateStampUrl.trim()} 
+                      alt="Official Seal" 
+                      className="w-14 h-14 object-contain mx-auto mb-1 drop-shadow-lg"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                  <span style={{ color: themeColors.highlight }} className="font-sans text-sm font-bold tracking-wider">
                     Date of issue: {issueDate}
                   </span>
-                  <span className="text-xs text-amber-400/70 font-mono mt-0.5">
+                  <span style={{ color: themeColors.primary }} className="text-xs font-mono mt-0.5 opacity-90">
                     Verify: {certId}
                   </span>
+                  {certificateSealText && (
+                    <span className="text-[9px] text-slate-400 font-mono tracking-widest uppercase mt-0.5">
+                      {certificateSealText}
+                    </span>
+                  )}
                 </div>
 
                 {/* Right Signature: Founder/CEO */}
-                <div className="flex flex-col items-center">
-                  <svg className="w-40 h-12 text-[#fef08a] drop-shadow-[0_2px_8px_rgba(245,158,11,0.35)]" viewBox="0 0 180 55" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Elegant CEO Loop & Underline Flourish */}
-                    <path d="M 18 45 C 10 18, 30 4, 48 10 C 62 15, 42 42, 28 32 C 18 24, 38 10, 68 18 C 88 23, 80 38, 98 28 C 110 21, 118 32, 134 22 C 144 16, 150 24, 158 20" strokeWidth="2.5" />
-                    <path d="M 32 36 C 65 28, 110 26, 152 32 C 165 34, 172 30, 166 26 C 158 21, 145 28, 135 34 C 120 42, 148 44, 170 42" strokeWidth="1.7" />
-                    <circle cx="174" cy="41" r="1.8" fill="currentColor" />
-                  </svg>
-                  <div className="w-32 h-[1px] bg-gradient-to-r from-transparent via-amber-400 to-transparent my-1" />
-                  <span className="font-sans text-sm font-bold text-slate-200">
-                    Founder/CEO
+                <div className="flex flex-col items-center justify-end">
+                  {ceoSignatureUrl && ceoSignatureUrl.trim() ? (
+                    <img 
+                      src={ceoSignatureUrl.trim()} 
+                      alt="CEO Signature" 
+                      className="h-12 w-auto max-w-[170px] object-contain drop-shadow-[0_2px_8px_rgba(245,158,11,0.35)] mx-auto"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <svg 
+                      style={{ color: themeColors.highlight }}
+                      className="w-40 h-12 drop-shadow-[0_2px_8px_rgba(245,158,11,0.35)]" 
+                      viewBox="0 0 180 55" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M 18 45 C 10 18, 30 4, 48 10 C 62 15, 42 42, 28 32 C 18 24, 38 10, 68 18 C 88 23, 80 38, 98 28 C 110 21, 118 32, 134 22 C 144 16, 150 24, 158 20" strokeWidth="2.5" />
+                      <path d="M 32 36 C 65 28, 110 26, 152 32 C 165 34, 172 30, 166 26 C 158 21, 145 28, 135 34 C 120 42, 148 44, 170 42" strokeWidth="1.7" />
+                      <circle cx="174" cy="41" r="1.8" fill="currentColor" />
+                    </svg>
+                  )}
+                  <div 
+                    style={{ background: `linear-gradient(to right, transparent, ${themeColors.primary}, transparent)` }}
+                    className="w-32 h-[1px] my-1" 
+                  />
+                  <span className="font-sans text-sm font-bold text-slate-100 text-center max-w-[160px]">
+                    {ceoName || 'Founder/CEO (AI Clipzone)'}
                   </span>
-                  <span className="font-sans text-xs text-slate-400 font-medium">
-                    (AI Clipzone)
+                  <span style={{ color: themeColors.primary }} className="text-[10px] font-semibold uppercase tracking-wider">
+                    {ceoTitle || 'Founder & CEO'}
                   </span>
                 </div>
               </div>

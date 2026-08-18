@@ -54,12 +54,13 @@ import {
   Trash2
 } from 'lucide-react';
 
-import { COURSES, TESTIMONIALS, FAQS } from './data';
-import { Course, ChatMessage, CourseVideo } from './types';
+import { COURSES, TESTIMONIALS, FAQS, DEFAULT_PAYMENT_CONFIG, DEFAULT_SITE_SETTINGS } from './data';
+import { Course, ChatMessage, CourseVideo, PaymentQrConfig, SiteSettingsConfig, FAQItem } from './types';
 import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc, query, where, getDoc, onSnapshot, arrayUnion } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, User as FirebaseUser, signInAnonymously } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { CertificateModal } from './components/CertificateModal';
+import { AdminDashboardModal } from './components/AdminDashboardModal';
 import { LOGO_DATA_URL, REMOTE_LOGO_URL } from './logo';
 
 enum OperationType {
@@ -147,8 +148,36 @@ export default function App() {
     return localStorage.getItem('clipzone_admin_activated') === 'true';
   });
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [adminInitialTab, setAdminInitialTab] = useState<'keys' | 'qr' | 'faqs' | 'overall' | 'courses'>('keys');
   const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState(false);
   const [logoutSecretCodeInput, setLogoutSecretCodeInput] = useState('');
+
+  // Dynamic Payment & QR Code configuration
+  const [paymentConfig, setPaymentConfig] = useState<PaymentQrConfig>(() => {
+    try {
+      const saved = localStorage.getItem('clipzone_payment_config');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_PAYMENT_CONFIG;
+  });
+
+  // Dynamic FAQs list state
+  const [faqs, setFaqs] = useState<FAQItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('clipzone_faqs_config');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return FAQS;
+  });
+
+  // Dynamic Global Site & Branding settings
+  const [siteSettings, setSiteSettings] = useState<SiteSettingsConfig>(() => {
+    try {
+      const saved = localStorage.getItem('clipzone_site_settings');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_SITE_SETTINGS;
+  });
 
   // Student Authentication & Course Activation states
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(() => {
@@ -379,6 +408,50 @@ export default function App() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Realtime listeners for Dynamic Payment QR, FAQs list, and Site Settings
+  useEffect(() => {
+    // 1. Payment QR config listener
+    const unsubPayment = onSnapshot(doc(db, 'system', 'payment_qr'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as PaymentQrConfig;
+        setPaymentConfig(prev => ({ ...prev, ...data }));
+        localStorage.setItem('clipzone_payment_config', JSON.stringify(data));
+      }
+    }, (err) => {
+      console.warn('Payment QR config realtime listener error:', err);
+    });
+
+    // 2. FAQs listener
+    const unsubFaqs = onSnapshot(doc(db, 'system', 'faqs'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.items) && data.items.length > 0) {
+          setFaqs(data.items);
+          localStorage.setItem('clipzone_faqs_config', JSON.stringify(data.items));
+        }
+      }
+    }, (err) => {
+      console.warn('FAQs realtime listener error:', err);
+    });
+
+    // 3. Overall Site Settings listener
+    const unsubSettings = onSnapshot(doc(db, 'system', 'site_settings'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as SiteSettingsConfig;
+        setSiteSettings(prev => ({ ...prev, ...data }));
+        localStorage.setItem('clipzone_site_settings', JSON.stringify(data));
+      }
+    }, (err) => {
+      console.warn('Site settings realtime listener error:', err);
+    });
+
+    return () => {
+      unsubPayment();
+      unsubFaqs();
+      unsubSettings();
+    };
   }, []);
 
   const getOrCreateDeviceId = () => {
@@ -1122,7 +1195,12 @@ export default function App() {
   };
 
   // ADMIN ACTIVATION KEY GENERATION HANDLERS
-  const handleGenerateActivationKey = async (courseId: string, autoCopy: boolean = true) => {
+  const handleGenerateActivationKey = async (
+    courseId: string, 
+    autoCopy: boolean = true, 
+    studentNameArg?: string, 
+    durationArg?: '1month' | '1year'
+  ) => {
     let targetCourseId = courseId;
     if (!targetCourseId && courses && courses.length > 0) {
       targetCourseId = courses[0].id;
@@ -1135,11 +1213,13 @@ export default function App() {
     const selectedCourseData = courses.find(c => c.id === targetCourseId);
     if (!selectedCourseData) return;
 
-    const studentName = genStudentName.trim();
+    const studentName = (studentNameArg !== undefined ? studentNameArg : genStudentName).trim();
     if (!studentName) {
       showToast('कृपया विद्यार्थीको नाम राख्नुहोस् (Please enter Student Name)!', 'error');
       return;
     }
+
+    const duration = durationArg || genSelectedDuration || '1year';
 
     // Generate readable random secret code
     const randId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -1149,7 +1229,7 @@ export default function App() {
       id: finalCode,
       code: finalCode,
       status: 'unused',
-      duration: genSelectedDuration,
+      duration: duration,
       createdAt: Date.now(),
       courseId: selectedCourseData.id,
       courseTitle: selectedCourseData.title,
@@ -1181,6 +1261,45 @@ export default function App() {
       console.error('Failed to write code to Firestore:', err);
       showToast(`Secret code "${finalCode}" created locally for ${studentName}!`, 'success');
       setGenStudentName('');
+    }
+  };
+
+  // ADMIN PAYMENT QR SETTINGS HANDLER
+  const handleSavePaymentConfig = async (newConfig: PaymentQrConfig) => {
+    setPaymentConfig(newConfig);
+    localStorage.setItem('clipzone_payment_config', JSON.stringify(newConfig));
+    try {
+      await setDoc(doc(db, 'system', 'payment_qr'), newConfig);
+    } catch (err) {
+      console.error('Error saving payment config to Firestore:', err);
+      handleFirestoreError(err, OperationType.WRITE, 'system/payment_qr');
+    }
+  };
+
+  // ADMIN FAQS SETTINGS HANDLER
+  const handleSaveFaqs = async (newFaqs: FAQItem[]) => {
+    setFaqs(newFaqs);
+    localStorage.setItem('clipzone_faqs_config', JSON.stringify(newFaqs));
+    try {
+      await setDoc(doc(db, 'system', 'faqs'), {
+        items: newFaqs,
+        updatedAt: Date.now()
+      });
+    } catch (err) {
+      console.error('Error saving FAQs to Firestore:', err);
+      handleFirestoreError(err, OperationType.WRITE, 'system/faqs');
+    }
+  };
+
+  // ADMIN OVERALL SITE SETTINGS HANDLER
+  const handleSaveSiteSettings = async (newSettings: SiteSettingsConfig) => {
+    setSiteSettings(newSettings);
+    localStorage.setItem('clipzone_site_settings', JSON.stringify(newSettings));
+    try {
+      await setDoc(doc(db, 'system', 'site_settings'), newSettings);
+    } catch (err) {
+      console.error('Error saving site settings to Firestore:', err);
+      handleFirestoreError(err, OperationType.WRITE, 'system/site_settings');
     }
   };
 
@@ -1936,9 +2055,12 @@ export default function App() {
 
   // Render QR Code inside canvas once QR modal opens
   useEffect(() => {
-    if (showQrModal && selectedCourse && qrCanvasRef.current) {
-      // eSewa QR payload for Ayush Chaurasiya
-      const qrPayload = JSON.stringify({ eSewa_id: "9763323268", name: "Ayush Chaurasiya" });
+    if (showQrModal && selectedCourse && qrCanvasRef.current && !paymentConfig.qrImageUrl) {
+      // eSewa QR payload using dynamic paymentConfig - clean format without remarks
+      const qrPayload = JSON.stringify({ 
+        eSewa_id: paymentConfig.esewaId || "9763323268", 
+        name: paymentConfig.accountName || "Ayush Chaurasiya" 
+      });
       QRCode.toCanvas(
         qrCanvasRef.current,
         qrPayload,
@@ -1958,7 +2080,7 @@ export default function App() {
         }
       );
     }
-  }, [showQrModal, selectedCourse]);
+  }, [showQrModal, selectedCourse, paymentConfig]);
 
   // Scroll to bottom of chat
   useEffect(() => {
@@ -2226,8 +2348,11 @@ export default function App() {
   // Confirm payment & launch WhatsApp message
   const handleConfirmPayment = () => {
     if (!selectedCourse) return;
-    const message = `I have purchased the "${selectedCourse.title}" course and paid ${selectedCourse.price} via QR/eSewa. Please provide the course access link!`;
-    window.open(`https://wa.me/9779763323268?text=${encodeURIComponent(message)}`, '_blank');
+    const cleanNum = (paymentConfig.whatsappNumber || '9763323268').replace(/\D/g, '');
+    const fullNumber = cleanNum.startsWith('977') ? cleanNum : `977${cleanNum}`;
+    const accountName = paymentConfig.accountName || 'Ayush Chaurasiya';
+    const message = `Hello! I have completed payment for "${selectedCourse.title}" (${selectedCourse.price}) via eSewa/QR (${accountName}). Please provide my secret course activation key!`;
+    window.open(`https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`, '_blank');
     setShowQrModal(false);
     setSelectedCourse(null);
     showToast('Payment confirmation message sent on WhatsApp!', 'success');
@@ -2266,6 +2391,14 @@ export default function App() {
 
       {/* Top Header & Navigation Container */}
       <div className="sticky top-0 z-[100] w-full shadow-2xl bg-black border-b border-zinc-800/80">
+        {/* Dynamic Global Notice Banner from Admin Settings */}
+        {siteSettings.showNoticeBanner && siteSettings.noticeBannerText && (
+          <div className="w-full bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 text-white text-xs font-bold py-1.5 px-4 text-center border-b border-purple-700/50 flex items-center justify-center gap-2 shadow-md">
+            <span className="animate-pulse">📢</span>
+            <span>{siteSettings.noticeBannerText}</span>
+          </div>
+        )}
+
         {/* Top Floating Banner with sleek pitch-black styling matching the logo */}
         <div className="w-full bg-black text-white">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between">
@@ -3305,7 +3438,7 @@ export default function App() {
           </div>
 
           <div className="max-w-3xl mx-auto space-y-4">
-            {FAQS.map((faq, index) => {
+            {(faqs && faqs.length > 0 ? faqs : FAQS).map((faq, index) => {
               const isOpen = !!openFaqs[index];
               return (
                 <div 
@@ -4310,7 +4443,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.25 }}
-              className="bg-white max-w-sm w-full rounded-3xl p-6 md:p-8 shadow-2xl relative z-10 text-center border border-slate-100"
+              className="bg-white max-w-sm w-full rounded-3xl p-6 md:p-8 shadow-2xl relative z-10 text-center border border-slate-100 max-h-[90vh] overflow-y-auto"
             >
               <h3 className="text-lg font-black text-slate-900">
                 Scan to Pay (eSewa / Bank App)
@@ -4324,9 +4457,19 @@ export default function App() {
                 {selectedCourse.price}
               </p>
 
-              {/* QR Canvas Container */}
+              {/* QR Canvas / Custom Image Container */}
               <div className="my-5 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl w-full shadow-inner text-center">
-                <canvas ref={qrCanvasRef} className="mx-auto rounded-lg shadow-xs" />
+                {paymentConfig.qrImageUrl ? (
+                  <div className="flex flex-col items-center">
+                    <img 
+                      src={paymentConfig.qrImageUrl} 
+                      alt="Payment QR Code" 
+                      className="max-h-64 w-auto rounded-xl shadow-md border border-slate-200 object-contain mx-auto"
+                    />
+                  </div>
+                ) : (
+                  <canvas ref={qrCanvasRef} className="mx-auto rounded-lg shadow-xs" />
+                )}
                 
                 {/* Account Details directly under QR */}
                 <div className="mt-4 pt-3 border-t border-slate-200 text-center">
@@ -4334,16 +4477,24 @@ export default function App() {
                     eSewa Official Account
                   </span>
                   <h4 className="text-base font-black text-slate-900 mt-2 flex items-center justify-center gap-1.5">
-                    👤 Ayush Chaurasiya
+                    👤 {paymentConfig.accountName || 'Ayush Chaurasiya'}
                   </h4>
                   <p className="text-xs font-extrabold text-slate-700 mt-1 flex items-center justify-center gap-1">
-                    📱 eSewa ID: <span className="font-mono text-purple-900 bg-purple-100/90 px-2 py-0.5 rounded text-xs select-all font-bold">9763323268</span>
+                    📱 eSewa ID: <span className="font-mono text-purple-900 bg-purple-100/90 px-2 py-0.5 rounded text-xs select-all font-bold">{paymentConfig.esewaId || '9763323268'}</span>
                   </p>
+
+                  {paymentConfig.bankAccountNo && (
+                    <div className="mt-2.5 pt-2 border-t border-dashed border-slate-200 text-[11px] text-slate-600 text-left bg-white p-2 rounded-lg border">
+                      <p className="font-bold text-slate-800">🏦 {paymentConfig.bankName || 'Bank Transfer'}</p>
+                      <p className="font-mono font-bold text-purple-900">A/C: {paymentConfig.bankAccountNo}</p>
+                      {paymentConfig.bankBranch && <p className="text-[10px] text-slate-400">Branch: {paymentConfig.bankBranch}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200/60 text-xs text-amber-900 font-bold leading-normal mb-6 text-left">
-                📌 <strong>भुक्तानी निर्देशन:</strong> QR स्क्यान गरी वा eSewa ID <span className="font-mono text-purple-900 font-black underline">9763323268</span> (Ayush Chaurasiya) मा रकम पठाएर स्क्रीनसट WhatsApp मा पठाउनुहोस्।
+                📌 <strong>भुक्तानी निर्देशन:</strong> {paymentConfig.paymentInstruction || `QR स्क्यान गरी वा eSewa ID ${paymentConfig.esewaId || '9763323268'} (${paymentConfig.accountName || 'Ayush Chaurasiya'}) मा रकम पठाएर स्क्रीनसट WhatsApp मा पठाउनुहोस्।`}
               </div>
 
               {/* Action buttons */}
@@ -4548,306 +4699,40 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ADMIN SECRET CODE GENERATOR DASHBOARD */}
-      <AnimatePresence>
-        {showAdminDashboard && (
-          <div className="fixed inset-0 z-[2200] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAdminDashboard(false)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs"
-            />
-
-            {/* Modal Box */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white max-w-4xl w-full rounded-3xl p-6 md:p-8 shadow-2xl relative z-10 border border-slate-100 flex flex-col max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 text-slate-800"
-            >
-              <button 
-                onClick={() => setShowAdminDashboard(false)}
-                className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition cursor-pointer"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-2">
-                <span className="bg-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
-                  🗝️ Code Management
-                </span>
-                <span className="text-xs text-slate-400 font-bold">Admin Panel</span>
-              </div>
-
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight text-left">
-                Student Activation Key Registry
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 font-semibold text-left">
-                Generate unreleased secret activation codes to unlock dynamic courses. Share generated keys with students to enable high-speed learning.
-              </p>
-
-              {/* Administrator Authentication Guard status confirmation */}
-              <div className="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-4 mt-5 text-xs text-emerald-800 font-semibold leading-relaxed text-left flex items-start gap-3">
-                <span className="text-base select-none">✅</span>
-                <div>
-                  <strong className="font-black text-emerald-900">Admin Mode Activated (offline-first & auto-synced)</strong>
-                  <p className="mt-1">
-                    You have bypassed the email requirements! You can now view, delete, or generate secret course keys instantly.
-                  </p>
-                </div>
-              </div>
-
-              {/* Grid content */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8 text-left">
-                
-                {/* Left Column: Generator tool */}
-                <div className="lg:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/60 self-start">
-                  <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider mb-4 flex items-center gap-1.5">
-                    ✨ Generate New Secret Key
-                  </h4>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Student Name (विद्यार्थीको पुरा नाम) *</label>
-                      <input 
-                        type="text"
-                        value={genStudentName}
-                        onChange={(e) => setGenStudentName(e.target.value)}
-                        placeholder="उदाहरण: Ramesh Sharma"
-                        className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-700"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Select Course Catalog *</label>
-                      <select 
-                        value={genSelectedCourseId}
-                        onChange={(e) => setGenSelectedCourseId(e.target.value)}
-                        className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-700"
-                      >
-                        <option value="">-- Choose Course --</option>
-                        {courses.map(course => (
-                          <option key={course.id} value={course.id}>{course.title}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5">Key Subscription Duration</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setGenSelectedDuration('1month')}
-                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
-                            genSelectedDuration === '1month' 
-                              ? 'bg-purple-600 border-purple-600 text-white shadow-xs' 
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          1 Month Access
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setGenSelectedDuration('1year')}
-                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
-                            genSelectedDuration === '1year' 
-                              ? 'bg-purple-600 border-purple-600 text-white shadow-xs' 
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          1 Year Access
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      <button
-                        onClick={() => {
-                          handleGenerateActivationKey(genSelectedCourseId, true);
-                        }}
-                        className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 rounded-xl text-xs shadow-md transition tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        ⚡ Auto-Generate & Copy To Clipboard
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleGenerateActivationKey(genSelectedCourseId, false);
-                        }}
-                        className="w-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-extrabold py-2.5 rounded-xl text-xs transition tracking-wider uppercase cursor-pointer text-center"
-                      >
-                        Generate Code Only
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Registry table */}
-                <div className="lg:col-span-7 flex flex-col">
-                  <div className="flex items-center justify-between mb-4 gap-3">
-                    <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-                      📋 Active Licenses & Status ({allActivationKeys.length})
-                    </h4>
-                    <button
-                      onClick={fetchAdminKeys}
-                      className="text-purple-600 hover:text-purple-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer"
-                    >
-                      <span className={isAdminLoadingKeys ? "animate-spin inline-block" : ""}>🔄</span> Refresh
-                    </button>
-                  </div>
-
-                  {/* Search box */}
-                  <div className="relative mb-3">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input 
-                      type="text"
-                      placeholder="Search code, course name or student email..."
-                      value={adminSearchKeyQuery}
-                      onChange={(e) => setAdminSearchKeyQuery(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 rounded-xl pl-9 pr-4 py-2 text-xs transition outline-hidden"
-                    />
-                  </div>
-
-                  {/* Registry table wrapper */}
-                  <div className="border border-slate-100 rounded-2xl overflow-hidden max-h-[350px] overflow-y-auto bg-white shadow-xs">
-                    {isAdminLoadingKeys && allActivationKeys.length === 0 ? (
-                      <div className="p-8 text-center text-xs text-slate-400 font-semibold flex items-center justify-center gap-2">
-                        <span className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></span>
-                        Loading key register database...
-                      </div>
-                    ) : allActivationKeys.length === 0 ? (
-                      <div className="p-8 text-center text-xs text-slate-400 font-semibold">
-                        No subscription keys found in Firestore. Generate one on the left!
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-slate-100">
-                        {allActivationKeys
-                          .filter(key => {
-                            const query = adminSearchKeyQuery.toLowerCase();
-                            return (
-                              key.code.toLowerCase().includes(query) ||
-                              (key.courseTitle || '').toLowerCase().includes(query) ||
-                              (key.studentName || '').toLowerCase().includes(query) ||
-                              (key.claimedByEmail || '').toLowerCase().includes(query) ||
-                              (key.claimedByUid || '').toLowerCase().includes(query)
-                            );
-                          })
-                          .map((key) => (
-                            <div key={key.id} className="p-3.5 hover:bg-slate-50/70 transition flex items-start justify-between gap-4 text-xs">
-                              <div className="space-y-1.5 min-w-0 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 select-all">
-                                    {key.code}
-                                  </span>
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(key.code);
-                                      showToast(`Copied code: ${key.code}! 📋`, 'success');
-                                    }}
-                                    className="text-purple-600 hover:text-purple-800 transition text-[10px] font-bold cursor-pointer"
-                                    title="Copy Key"
-                                  >
-                                    📋 Copy
-                                  </button>
-                                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase ${
-                                    key.status === 'unused' 
-                                      ? 'bg-amber-100 text-amber-800 border border-amber-200' 
-                                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                  }`}>
-                                    {key.status}
-                                  </span>
-                                  <span className="text-[9px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-bold">
-                                    {key.duration === '1month' ? '30 Days' : '1 Year'}
-                                  </span>
-                                </div>
-
-                                <p className="text-[11px] font-black text-slate-800 truncate">
-                                  📚 {key.courseTitle || 'All Courses'}
-                                </p>
-
-                                <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 space-y-1 text-[10px] font-bold text-slate-600">
-                                  <p className="flex items-center gap-1.5 text-purple-900 font-extrabold">
-                                    👤 Student Name: <span className="text-slate-900">{key.studentName || key.claimedByEmail || 'Not Assigned'}</span>
-                                  </p>
-                                  {key.claimedByEmail && key.claimedByEmail !== key.studentName && (
-                                    <p className="text-slate-500 text-[9px]">
-                                      📧 User ID/Email: <span className="font-mono text-slate-700">{key.claimedByEmail}</span>
-                                    </p>
-                                  )}
-                                  <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-slate-100/80 flex-wrap gap-2">
-                                    <span>Created: {key.createdAt ? new Date(key.createdAt).toLocaleDateString() : 'N/A'}</span>
-                                    <span>
-                                      Claimed: {key.status === 'used' && key.claimedAt ? new Date(key.claimedAt).toLocaleDateString() : 'Unclaimed'}
-                                    </span>
-                                    <span>
-                                      Session: {key.activeDeviceId ? (
-                                        <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-black text-[8px] uppercase">🟢 Active Device</span>
-                                      ) : (
-                                        <span className="text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded font-black text-[8px] uppercase">⚪ Logged Out</span>
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <button
-                                onClick={() => handleDeleteActivationKey(key.code)}
-                                className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition shrink-0 cursor-pointer"
-                                title="Delete license"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Global Session Reset Emergency Controls */}
-              <div className="mt-8 bg-gradient-to-r from-rose-950 via-slate-900 to-red-950 rounded-2xl p-5 border border-rose-500/30 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
-                <div className="space-y-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-xs border border-rose-500/40 shrink-0">
-                      🚨
-                    </span>
-                    <h4 className="text-sm font-black text-white">
-                      Logout All User Devices (सबै डिभाइस सेसन लगआउट)
-                    </h4>
-                  </div>
-                  <p className="text-xs text-rose-200/80 font-medium">
-                    वेबसाइटमा समस्या आउँदा वा नयाँ अपडेट पछि सबै युजर/विद्यार्थीहरुका Active Devices र Sessions एकैपटक स्वतः लगआउट गराउनुहोस्।
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLogoutSecretCodeInput('');
-                    setShowLogoutConfirmModal(true);
-                  }}
-                  className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black px-5 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg cursor-pointer shrink-0 active:scale-95 border border-rose-400/30 flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout All User Devices 🚀
-                </button>
-              </div>
-
-              <button 
-                onClick={() => setShowAdminDashboard(false)}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3.5 px-4 rounded-xl text-sm transition mt-8 cursor-pointer"
-              >
-                Close Key Manager
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* ADMIN FULL DASHBOARD MODAL */}
+      <AdminDashboardModal
+        isOpen={showAdminDashboard}
+        onClose={() => setShowAdminDashboard(false)}
+        courses={courses}
+        allActivationKeys={allActivationKeys}
+        isAdminLoadingKeys={isAdminLoadingKeys}
+        adminSearchKeyQuery={adminSearchKeyQuery}
+        setAdminSearchKeyQuery={setAdminSearchKeyQuery}
+        genStudentName={genStudentName}
+        setGenStudentName={setGenStudentName}
+        genSelectedCourseId={genSelectedCourseId}
+        setGenSelectedCourseId={setGenSelectedCourseId}
+        genSelectedDuration={genSelectedDuration}
+        setGenSelectedDuration={setGenSelectedDuration}
+        onGenerateActivationKey={handleGenerateActivationKey}
+        onDeleteActivationKey={handleDeleteActivationKey}
+        onRefreshKeys={fetchAdminKeys}
+        onLogoutAllDevices={() => {
+          setLogoutSecretCodeInput('');
+          setShowLogoutConfirmModal(true);
+        }}
+        paymentConfig={paymentConfig}
+        onSavePaymentConfig={handleSavePaymentConfig}
+        faqs={faqs}
+        onSaveFaqs={handleSaveFaqs}
+        siteSettings={siteSettings}
+        onSaveSiteSettings={handleSaveSiteSettings}
+        onAddNewCourse={() => {
+          setShowAdminDashboard(false);
+          handleCreateCourseClick();
+        }}
+        showToast={showToast}
+      />
 
       {/* CONFIRM LOGOUT ALL USER DEVICES MODAL */}
       <AnimatePresence>
@@ -5780,6 +5665,8 @@ export default function App() {
           courseTitle={certificateCourseTitle}
           issueDate={certificateIssueDate || '2083/01/14'}
           certificateId={certificateCode}
+          directorName={siteSettings.certificateDirectorName}
+          ceoName={siteSettings.certificateCeoName}
           onClose={() => setShowCertificateModal(false)}
         />
       )}

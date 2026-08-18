@@ -1,0 +1,1356 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import QRCode from 'qrcode';
+import { 
+  X, 
+  Key, 
+  QrCode as QrIcon, 
+  HelpCircle, 
+  Settings, 
+  BookOpen, 
+  Save, 
+  Plus, 
+  Trash2, 
+  Edit3, 
+  ArrowUp, 
+  ArrowDown, 
+  RotateCcw, 
+  Check, 
+  Copy, 
+  RefreshCw, 
+  LogOut, 
+  Upload, 
+  ExternalLink,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
+
+import { Course, FAQItem, PaymentQrConfig, SiteSettingsConfig } from '../types';
+import { DEFAULT_PAYMENT_CONFIG, DEFAULT_SITE_SETTINGS, FAQS as INITIAL_DEFAULT_FAQS } from '../data';
+
+interface AdminDashboardModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  courses: Course[];
+  // Keys management
+  allActivationKeys: any[];
+  onGenerateKey: (courseId: string, autoCopy: boolean, studentName: string, duration: '1month' | '1year') => Promise<void>;
+  onDeleteKey: (code: string) => Promise<void>;
+  onRefreshKeys: () => Promise<void>;
+  isAdminLoadingKeys: boolean;
+  onOpenLogoutConfirm: () => void;
+  // Payment & QR config
+  paymentConfig: PaymentQrConfig;
+  onSavePaymentConfig: (newConfig: PaymentQrConfig) => Promise<void>;
+  // FAQs config
+  faqs: FAQItem[];
+  onSaveFaqs: (newFaqs: FAQItem[]) => Promise<void>;
+  // Site Settings config
+  siteSettings: SiteSettingsConfig;
+  onSaveSiteSettings: (newSettings: SiteSettingsConfig) => Promise<void>;
+  // Course management actions
+  onCreateCourseClick: () => void;
+  onEditCourseClick: (course: Course) => void;
+  onDeleteCourseClick: (courseId: string) => Promise<void>;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  initialTab?: 'keys' | 'qr' | 'faqs' | 'overall' | 'courses';
+}
+
+export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
+  isOpen,
+  onClose,
+  courses,
+  allActivationKeys,
+  onGenerateKey,
+  onDeleteKey,
+  onRefreshKeys,
+  isAdminLoadingKeys,
+  onOpenLogoutConfirm,
+  paymentConfig,
+  onSavePaymentConfig,
+  faqs,
+  onSaveFaqs,
+  siteSettings,
+  onSaveSiteSettings,
+  onCreateCourseClick,
+  onEditCourseClick,
+  onDeleteCourseClick,
+  showToast,
+  initialTab = 'keys'
+}) => {
+  const [activeTab, setActiveTab] = useState<'keys' | 'qr' | 'faqs' | 'overall' | 'courses'>(initialTab);
+
+  // When initialTab changes, update activeTab
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
+
+  // Keys Tab states
+  const [genSelectedCourseId, setGenSelectedCourseId] = useState('');
+  const [genSelectedDuration, setGenSelectedDuration] = useState<'1month' | '1year'>('1year');
+  const [genStudentName, setGenStudentName] = useState('');
+  const [adminSearchKeyQuery, setAdminSearchKeyQuery] = useState('');
+  const [isGeneratingKey, setIsGeneratingKey] = useState(false);
+
+  // QR & Payment Tab states
+  const [qrEsewaId, setQrEsewaId] = useState(paymentConfig.esewaId || '9763323268');
+  const [qrAccountName, setQrAccountName] = useState(paymentConfig.accountName || 'Ayush Chaurasiya');
+  const [qrWhatsappNumber, setQrWhatsappNumber] = useState(paymentConfig.whatsappNumber || '9763323268');
+  const [qrBankName, setQrBankName] = useState(paymentConfig.bankName || 'Global IME / Nabil Bank');
+  const [qrBankAccountNo, setQrBankAccountNo] = useState(paymentConfig.bankAccountNo || '');
+  const [qrBankBranch, setQrBankBranch] = useState(paymentConfig.bankBranch || '');
+  const [qrImageUrl, setQrImageUrl] = useState(paymentConfig.qrImageUrl || '');
+  const [qrPaymentInstruction, setQrPaymentInstruction] = useState(
+    paymentConfig.paymentInstruction || '📌 भुक्तानी निर्देशन: QR स्क्यान गरी वा eSewa ID मा रकम पठाएर स्क्रीनसट WhatsApp मा पठाउनुहोस्।'
+  );
+  const [isSavingQr, setIsSavingQr] = useState(false);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // FAQs Tab states
+  const [localFaqs, setLocalFaqs] = useState<FAQItem[]>(faqs);
+  const [editingFaqIndex, setEditingFaqIndex] = useState<number | null>(null);
+  const [editQuestion, setEditQuestion] = useState('');
+  const [editAnswer, setEditAnswer] = useState('');
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newAnswer, setNewAnswer] = useState('');
+  const [isSavingFaqs, setIsSavingFaqs] = useState(false);
+
+  // Overall Settings Tab states
+  const [siteTitle, setSiteTitle] = useState(siteSettings.siteTitle || 'TOP AI COURSE NEPAL 🇳🇵');
+  const [siteTagline, setSiteTagline] = useState(siteSettings.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform");
+  const [noticeBannerText, setNoticeBannerText] = useState(
+    siteSettings.noticeBannerText || '🎉 New AI Tools & YouTube Blueprint Masterclasses Live! 50% Early Bird Discount.'
+  );
+  const [showNoticeBanner, setShowNoticeBanner] = useState(siteSettings.showNoticeBanner !== false);
+  const [supportPhone, setSupportPhone] = useState(siteSettings.supportPhone || '9763323268');
+  const [supportEmail, setSupportEmail] = useState(siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com');
+  const [certificateDirectorName, setCertificateDirectorName] = useState(siteSettings.certificateDirectorName || 'Director');
+  const [certificateCeoName, setCertificateCeoName] = useState(siteSettings.certificateCeoName || 'Founder/CEO (AI Clipzone)');
+  const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
+
+  // Sync state when props change
+  useEffect(() => {
+    setQrEsewaId(paymentConfig.esewaId || '9763323268');
+    setQrAccountName(paymentConfig.accountName || 'Ayush Chaurasiya');
+    setQrWhatsappNumber(paymentConfig.whatsappNumber || '9763323268');
+    setQrBankName(paymentConfig.bankName || 'Global IME / Nabil Bank');
+    setQrBankAccountNo(paymentConfig.bankAccountNo || '');
+    setQrBankBranch(paymentConfig.bankBranch || '');
+    setQrImageUrl(paymentConfig.qrImageUrl || '');
+    setQrPaymentInstruction(
+      paymentConfig.paymentInstruction || '📌 भुक्तानी निर्देशन: QR स्क्यान गरी वा eSewa ID मा रकम पठाएर स्क्रीनसट WhatsApp मा पठाउनुहोस्।'
+    );
+  }, [paymentConfig]);
+
+  useEffect(() => {
+    setLocalFaqs(faqs);
+  }, [faqs]);
+
+  useEffect(() => {
+    setSiteTitle(siteSettings.siteTitle || 'TOP AI COURSE NEPAL 🇳🇵');
+    setSiteTagline(siteSettings.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform");
+    setNoticeBannerText(
+      siteSettings.noticeBannerText || '🎉 New AI Tools & YouTube Blueprint Masterclasses Live! 50% Early Bird Discount.'
+    );
+    setShowNoticeBanner(siteSettings.showNoticeBanner !== false);
+    setSupportPhone(siteSettings.supportPhone || '9763323268');
+    setSupportEmail(siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com');
+    setCertificateDirectorName(siteSettings.certificateDirectorName || 'Director');
+    setCertificateCeoName(siteSettings.certificateCeoName || 'Founder/CEO (AI Clipzone)');
+  }, [siteSettings]);
+
+  // Render QR Canvas Preview dynamically in the QR Settings Tab
+  useEffect(() => {
+    if (activeTab === 'qr' && previewCanvasRef.current && !qrImageUrl) {
+      const qrPayload = JSON.stringify({
+        eSewa_id: qrEsewaId.trim() || '9763323268',
+        name: qrAccountName.trim() || 'Ayush Chaurasiya'
+      });
+      QRCode.toCanvas(
+        previewCanvasRef.current,
+        qrPayload,
+        {
+          width: 170,
+          margin: 1.5,
+          color: {
+            dark: '#1e1b4b',
+            light: '#ffffff'
+          }
+        },
+        (error) => {
+          if (error) console.error('QR preview canvas error:', error);
+        }
+      );
+    }
+  }, [activeTab, qrEsewaId, qrAccountName, qrImageUrl]);
+
+  if (!isOpen) return null;
+
+  // Handle Save Payment QR Config
+  const handleSavePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qrEsewaId.trim() || !qrAccountName.trim()) {
+      showToast('eSewa ID and Account Name are required!', 'error');
+      return;
+    }
+    setIsSavingQr(true);
+    try {
+      const updatedConfig: PaymentQrConfig = {
+        esewaId: qrEsewaId.trim(),
+        accountName: qrAccountName.trim(),
+        whatsappNumber: qrWhatsappNumber.trim(),
+        bankName: qrBankName.trim(),
+        bankAccountNo: qrBankAccountNo.trim(),
+        bankBranch: qrBankBranch.trim(),
+        qrImageUrl: qrImageUrl.trim(),
+        paymentInstruction: qrPaymentInstruction.trim(),
+        updatedAt: Date.now()
+      };
+      await onSavePaymentConfig(updatedConfig);
+      showToast('QR & Payment details saved successfully! 💳', 'success');
+    } catch (err) {
+      console.error('Error saving payment config:', err);
+      showToast('Failed to save payment settings.', 'error');
+    } finally {
+      setIsSavingQr(false);
+    }
+  };
+
+  // Handle Save FAQs
+  const handleSaveFaqsToCloud = async () => {
+    setIsSavingFaqs(true);
+    try {
+      await onSaveFaqs(localFaqs);
+      showToast('FAQs saved and published live! ❓', 'success');
+    } catch (err) {
+      console.error('Error saving FAQs:', err);
+      showToast('Failed to save FAQs to cloud.', 'error');
+    } finally {
+      setIsSavingFaqs(false);
+    }
+  };
+
+  const handleAddNewFaq = () => {
+    if (!newQuestion.trim() || !newAnswer.trim()) {
+      showToast('Please enter both question and answer for FAQ!', 'error');
+      return;
+    }
+    const updated = [
+      ...localFaqs,
+      {
+        question: newQuestion.trim(),
+        answer: newAnswer.trim()
+      }
+    ];
+    setLocalFaqs(updated);
+    setNewQuestion('');
+    setNewAnswer('');
+    showToast('New FAQ added to list. Click "Save FAQs to Cloud" to publish!', 'info');
+  };
+
+  const handleUpdateFaq = (index: number) => {
+    if (!editQuestion.trim() || !editAnswer.trim()) {
+      showToast('Question and answer cannot be empty!', 'error');
+      return;
+    }
+    const updated = [...localFaqs];
+    updated[index] = {
+      question: editQuestion.trim(),
+      answer: editAnswer.trim()
+    };
+    setLocalFaqs(updated);
+    setEditingFaqIndex(null);
+    showToast('FAQ updated! Click "Save FAQs to Cloud" to publish.', 'info');
+  };
+
+  const handleDeleteFaq = (index: number) => {
+    if (!window.confirm('Are you sure you want to delete this FAQ question?')) return;
+    const updated = localFaqs.filter((_, idx) => idx !== index);
+    setLocalFaqs(updated);
+    if (editingFaqIndex === index) {
+      setEditingFaqIndex(null);
+    }
+    showToast('FAQ deleted. Remember to Save changes to Cloud.', 'info');
+  };
+
+  const handleMoveFaq = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === localFaqs.length - 1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const updated = [...localFaqs];
+    const item = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = item;
+    setLocalFaqs(updated);
+  };
+
+  const handleResetFaqsToDefault = () => {
+    if (!window.confirm('Reset FAQ list back to original default questions?')) return;
+    setLocalFaqs(INITIAL_DEFAULT_FAQS);
+    showToast('Reset FAQs to default. Click Save to publish.', 'info');
+  };
+
+  // Handle Save Overall Site Settings
+  const handleSaveOverallSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSiteSettings(true);
+    try {
+      const updatedSettings: SiteSettingsConfig = {
+        siteTitle: siteTitle.trim(),
+        siteTagline: siteTagline.trim(),
+        noticeBannerText: noticeBannerText.trim(),
+        showNoticeBanner,
+        supportPhone: supportPhone.trim(),
+        supportEmail: supportEmail.trim(),
+        certificateDirectorName: certificateDirectorName.trim(),
+        certificateCeoName: certificateCeoName.trim(),
+        updatedAt: Date.now()
+      };
+      await onSaveSiteSettings(updatedSettings);
+      showToast('Overall site branding & settings updated live! ⚙️', 'success');
+    } catch (err) {
+      console.error('Error saving overall site settings:', err);
+      showToast('Failed to save site settings.', 'error');
+    } finally {
+      setIsSavingSiteSettings(false);
+    }
+  };
+
+  // Handle Local Image Upload for QR Code
+  const handleQrImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('Image size exceeds 2MB limit. Please upload a smaller image.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setQrImageUrl(reader.result);
+        showToast('Custom QR image loaded into preview! Click Save to apply.', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      {/* Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm"
+      />
+
+      {/* Main Admin Modal Window */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 15 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white max-w-5xl w-full rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl relative z-10 max-h-[92vh] flex flex-col border border-slate-200 overflow-hidden"
+      >
+        {/* Top Header Bar */}
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-700 to-indigo-800 text-white flex items-center justify-center font-black text-lg shadow-md">
+              👑
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  Admin Master Control
+                </h3>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-300">
+                  Live Cloud Sync
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                Manage secret keys, dynamic eSewa QR payment details, FAQs section, and overall website settings.
+              </p>
+            </div>
+          </div>
+
+          <button 
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer shrink-0"
+            title="Close Admin Panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tab Navigation Menu */}
+        <div className="flex items-center gap-1.5 pt-3 pb-2 overflow-x-auto border-b border-slate-100 shrink-0 scrollbar-none">
+          <button
+            onClick={() => setActiveTab('keys')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'keys'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <Key className="w-3.5 h-3.5" />
+            Activation Keys ({allActivationKeys.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('qr')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'qr'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <QrIcon className="w-3.5 h-3.5" />
+            💳 QR & Payment Details
+          </button>
+
+          <button
+            onClick={() => setActiveTab('faqs')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'faqs'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            ❓ FAQs Section ({localFaqs.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('overall')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'overall'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            ⚙️ Overall Site Settings
+          </button>
+
+          <button
+            onClick={() => setActiveTab('courses')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'courses'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            📚 Course Catalog ({courses.length})
+          </button>
+        </div>
+
+        {/* Tab Body Scrollable Container */}
+        <div className="grow overflow-y-auto py-4 space-y-6 text-left pr-1">
+
+          {/* ========================================================================= */}
+          {/* TAB 1: ACTIVATION KEYS & DEVICE SESSIONS */}
+          {/* ========================================================================= */}
+          {activeTab === 'keys' && (
+            <div className="space-y-6">
+              <div className="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-4 text-xs text-emerald-800 font-semibold leading-relaxed flex items-start gap-3">
+                <span className="text-base select-none">✅</span>
+                <div>
+                  <strong className="font-black text-emerald-900">Admin Mode Activated (offline-first & auto-synced)</strong>
+                  <p className="mt-0.5">
+                    Generate unreleased secret activation codes to unlock dynamic courses. Share generated keys with students to enable high-speed learning.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Generator tool */}
+                <div className="lg:col-span-5 bg-slate-50 p-5 rounded-2xl border border-slate-200/80 self-start space-y-4">
+                  <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                    ✨ Generate New Secret Key
+                  </h4>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Student Name (विद्यार्थीको पुरा नाम) *
+                    </label>
+                    <input 
+                      type="text"
+                      value={genStudentName}
+                      onChange={(e) => setGenStudentName(e.target.value)}
+                      placeholder="उदाहरण: Ramesh Sharma"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Select Course Catalog *
+                    </label>
+                    <select 
+                      value={genSelectedCourseId}
+                      onChange={(e) => setGenSelectedCourseId(e.target.value)}
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-700"
+                    >
+                      <option value="">-- Choose Course --</option>
+                      {courses.map(course => (
+                        <option key={course.id} value={course.id}>{course.title}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Key Subscription Duration
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setGenSelectedDuration('1month')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
+                          genSelectedDuration === '1month' 
+                            ? 'bg-purple-600 border-purple-600 text-white shadow-xs' 
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        1 Month Access
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGenSelectedDuration('1year')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
+                          genSelectedDuration === '1year' 
+                            ? 'bg-purple-600 border-purple-600 text-white shadow-xs' 
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        1 Year Access
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5 pt-1">
+                    <button
+                      disabled={isGeneratingKey}
+                      onClick={async () => {
+                        setIsGeneratingKey(true);
+                        await onGenerateKey(genSelectedCourseId, true, genStudentName, genSelectedDuration);
+                        setGenStudentName('');
+                        setIsGeneratingKey(false);
+                      }}
+                      className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 rounded-xl text-xs shadow-md transition tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      ⚡ Auto-Generate & Copy To Clipboard
+                    </button>
+
+                    <button
+                      disabled={isGeneratingKey}
+                      onClick={async () => {
+                        setIsGeneratingKey(true);
+                        await onGenerateKey(genSelectedCourseId, false, genStudentName, genSelectedDuration);
+                        setGenStudentName('');
+                        setIsGeneratingKey(false);
+                      }}
+                      className="w-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-extrabold py-2.5 rounded-xl text-xs transition tracking-wider uppercase cursor-pointer text-center disabled:opacity-50"
+                    >
+                      Generate Code Only
+                    </button>
+                  </div>
+                </div>
+
+                {/* Registry table */}
+                <div className="lg:col-span-7 flex flex-col">
+                  <div className="flex items-center justify-between mb-3 gap-3">
+                    <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                      📋 Active Licenses & Status ({allActivationKeys.length})
+                    </h4>
+                    <button
+                      onClick={onRefreshKeys}
+                      className="text-purple-600 hover:text-purple-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isAdminLoadingKeys ? 'animate-spin' : ''}`} /> Refresh
+                    </button>
+                  </div>
+
+                  <div className="mb-3">
+                    <input 
+                      type="text"
+                      placeholder="Search by code, course title, or student name..."
+                      value={adminSearchKeyQuery}
+                      onChange={(e) => setAdminSearchKeyQuery(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-medium text-slate-700"
+                    />
+                  </div>
+
+                  <div className="overflow-y-auto max-h-[380px] space-y-2.5 pr-1">
+                    {allActivationKeys
+                      .filter(k => {
+                        if (!adminSearchKeyQuery) return true;
+                        const q = adminSearchKeyQuery.toLowerCase();
+                        return (
+                          (k.code || k.id || '').toLowerCase().includes(q) ||
+                          (k.courseTitle || '').toLowerCase().includes(q) ||
+                          (k.studentName || '').toLowerCase().includes(q) ||
+                          (k.claimedByEmail || '').toLowerCase().includes(q)
+                        );
+                      })
+                      .map((key) => (
+                        <div 
+                          key={key.code || key.id}
+                          className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs flex items-start justify-between gap-3 hover:border-purple-300 transition"
+                        >
+                          <div className="space-y-1.5 grow overflow-hidden">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono font-black text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                {key.code || key.id}
+                              </span>
+                              <button
+                                onClick={async () => {
+                                  await navigator.clipboard.writeText(key.code || key.id);
+                                  showToast(`Copied ${key.code || key.id}! 📋`, 'info');
+                                }}
+                                className="text-purple-600 hover:text-purple-800 transition text-[10px] font-bold cursor-pointer"
+                              >
+                                📋 Copy
+                              </button>
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase ${
+                                key.status === 'unused' 
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }`}>
+                                {key.status}
+                              </span>
+                              <span className="text-[9px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-bold">
+                                {key.duration === '1month' ? '30 Days' : '1 Year'}
+                              </span>
+                            </div>
+
+                            <p className="text-[11px] font-black text-slate-800 truncate">
+                              📚 {key.courseTitle || 'All Courses'}
+                            </p>
+
+                            <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 space-y-1 text-[10px] font-bold text-slate-600">
+                              <p className="flex items-center gap-1.5 text-purple-900 font-extrabold">
+                                👤 Student Name: <span className="text-slate-900">{key.studentName || key.claimedByEmail || 'Not Assigned'}</span>
+                              </p>
+                              <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-slate-100/80 flex-wrap gap-2">
+                                <span>Created: {key.createdAt ? new Date(key.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                <span>Claimed: {key.status === 'used' && key.claimedAt ? new Date(key.claimedAt).toLocaleDateString() : 'Unclaimed'}</span>
+                                <span>
+                                  Session: {key.activeDeviceId ? (
+                                    <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-black text-[8px] uppercase">🟢 Active</span>
+                                  ) : (
+                                    <span className="text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded font-black text-[8px] uppercase">⚪ Idle</span>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => onDeleteKey(key.code || key.id)}
+                            className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition shrink-0 cursor-pointer"
+                            title="Delete license"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Session Reset */}
+              <div className="bg-gradient-to-r from-rose-950 via-slate-900 to-red-950 rounded-2xl p-5 border border-rose-500/30 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-xs border border-rose-500/40 shrink-0">
+                      🚨
+                    </span>
+                    <h4 className="text-sm font-black text-white">
+                      Logout All User Devices (सबै डिभाइस सेसन लगआउट)
+                    </h4>
+                  </div>
+                  <p className="text-xs text-rose-200/80 font-medium">
+                    वेबसाइटमा समस्या आउँदा वा नयाँ अपडेट पछि सबै युजर/विद्यार्थीहरुका Active Devices र Sessions एकैपटक स्वतः लगआउट गराउनुहोस्।
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onOpenLogoutConfirm}
+                  className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black px-5 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg cursor-pointer shrink-0 active:scale-95 border border-rose-400/30 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout All User Devices 🚀
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 2: QR & PAYMENT DETAILS CONFIGURATION */}
+          {/* ========================================================================= */}
+          {activeTab === 'qr' && (
+            <form onSubmit={handleSavePayment} className="space-y-6">
+              <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-xs text-indigo-900 font-semibold leading-relaxed flex items-start gap-3">
+                <span className="text-base select-none">💳</span>
+                <div>
+                  <strong className="font-black text-indigo-950">Dynamic Payment & eSewa QR Configuration</strong>
+                  <p className="mt-0.5 text-indigo-800">
+                    यहाँबाट eSewa ID, खातावालाको नाम, WhatsApp नम्बर वा आफ्नै QR Code तस्विर सिधै फेर्न सक्नुहुन्छ। यो सम्पूर्ण वेबसाइटको Checkout Modal र Chatbot मा तुरुन्तै अपडेट हुन्छ।
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Form Fields Column */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                        eSewa ID / Mobile Number *
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        value={qrEsewaId}
+                        onChange={(e) => setQrEsewaId(e.target.value)}
+                        placeholder="उदा: 9763323268"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                        Account Holder Name *
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        value={qrAccountName}
+                        onChange={(e) => setQrAccountName(e.target.value)}
+                        placeholder="उदा: Ayush Chaurasiya"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                        WhatsApp Support / Verification Number *
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        value={qrWhatsappNumber}
+                        onChange={(e) => setQrWhatsappNumber(e.target.value)}
+                        placeholder="उदा: 9763323268 वा 9779763323268"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                        Bank Name (वैकल्पिक बैंक ट्रान्सफर)
+                      </label>
+                      <input 
+                        type="text"
+                        value={qrBankName}
+                        onChange={(e) => setQrBankName(e.target.value)}
+                        placeholder="उदा: Global IME Bank / Nabil Bank"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                        Bank Account Number (वैकल्पिक)
+                      </label>
+                      <input 
+                        type="text"
+                        value={qrBankAccountNo}
+                        onChange={(e) => setQrBankAccountNo(e.target.value)}
+                        placeholder="उदा: 01234567890123"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                        Bank Branch (वैकल्पिक)
+                      </label>
+                      <input 
+                        type="text"
+                        value={qrBankBranch}
+                        onChange={(e) => setQrBankBranch(e.target.value)}
+                        placeholder="उदा: Kathmandu Branch"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Custom QR Code Image URL (वा तल फाइल अपलोड गर्नुहोस्)
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        value={qrImageUrl}
+                        onChange={(e) => setQrImageUrl(e.target.value)}
+                        placeholder="खाली छाडेमा स्वतः eSewa QR कोड जेनेरेट हुनेछ"
+                        className="grow bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2 text-xs transition outline-hidden font-medium text-slate-800"
+                      />
+                      <label className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 cursor-pointer transition shrink-0 border border-slate-200">
+                        <Upload className="w-3.5 h-3.5" /> Upload QR
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleQrImageFileUpload}
+                          className="hidden" 
+                        />
+                      </label>
+                      {qrImageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQrImageUrl('');
+                            showToast('Custom QR removed. Using dynamic eSewa QR.', 'info');
+                          }}
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2.5 py-2 rounded-xl text-xs transition cursor-pointer border border-rose-200"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Payment Instruction Note (भुक्तानी निर्देशन सन्देश)
+                    </label>
+                    <textarea 
+                      rows={2}
+                      value={qrPaymentInstruction}
+                      onChange={(e) => setQrPaymentInstruction(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2 text-xs transition outline-hidden font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Preview Box Column */}
+                <div className="lg:col-span-5 bg-gradient-to-br from-slate-50 to-purple-50/40 p-5 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center self-start">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-3 py-0.5 rounded-full border border-purple-200 mb-3">
+                    🔍 Live Checkout Preview
+                  </span>
+
+                  <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200/80 w-full max-w-[240px]">
+                    {qrImageUrl ? (
+                      <img 
+                        src={qrImageUrl} 
+                        alt="Custom QR Preview" 
+                        className="w-full h-44 object-contain rounded-xl shadow-xs mx-auto"
+                      />
+                    ) : (
+                      <canvas ref={previewCanvasRef} className="mx-auto rounded-lg shadow-xs" />
+                    )}
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
+                      <span className="inline-block text-[9px] font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                        eSewa Official
+                      </span>
+                      <h4 className="text-xs font-black text-slate-900 mt-1 truncate">
+                        👤 {qrAccountName || 'Ayush Chaurasiya'}
+                      </h4>
+                      <p className="text-[11px] font-black text-slate-700 mt-0.5">
+                        📱 eSewa ID: <span className="font-mono text-purple-900 bg-purple-100 px-1.5 py-0.2 rounded text-[10px]">{qrEsewaId || '9763323268'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 mt-3 font-medium px-2">
+                    विद्यार्थीहरूले "QR स्क्यान गरी तत्काल भुक्तानी" थिच्दा ठ्याक्कै यस्तो QR कोड र खाता देख्नेछन्।
+                  </p>
+                </div>
+              </div>
+
+              {/* Save Buttons */}
+              <div className="pt-3 border-t border-slate-100 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isSavingQr}
+                  className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSavingQr ? 'Saving to Firebase...' : '💾 Save QR & Payment Settings'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQrEsewaId(DEFAULT_PAYMENT_CONFIG.esewaId);
+                    setQrAccountName(DEFAULT_PAYMENT_CONFIG.accountName);
+                    setQrWhatsappNumber(DEFAULT_PAYMENT_CONFIG.whatsappNumber);
+                    setQrBankName(DEFAULT_PAYMENT_CONFIG.bankName || '');
+                    setQrBankAccountNo('');
+                    setQrBankBranch('');
+                    setQrImageUrl('');
+                    setQrPaymentInstruction(DEFAULT_PAYMENT_CONFIG.paymentInstruction || '');
+                    showToast('Reset form to initial defaults. Click Save to apply.', 'info');
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 3: FAQ SECTION MANAGER */}
+          {/* ========================================================================= */}
+          {activeTab === 'faqs' && (
+            <div className="space-y-6">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 font-semibold leading-relaxed flex items-start gap-3">
+                <span className="text-base select-none">❓</span>
+                <div>
+                  <strong className="font-black text-amber-950">Dynamic FAQ Management System</strong>
+                  <p className="mt-0.5 text-amber-800">
+                    यहाँबाट FAQ (बारम्बार सोधिने प्रश्नहरू) थप्न, सम्पादन गर्न, क्रम मिलाउन वा हटाउन सक्नुहुन्छ। परिमार्जन गरिसकेपछि तल रहेको <strong>"Save FAQs to Cloud"</strong> बटन थिच्नुहोस्।
+                  </p>
+                </div>
+              </div>
+
+              {/* Add New FAQ Form */}
+              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 space-y-3">
+                <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5">
+                  ➕ Add New FAQ Question & Answer
+                </h4>
+                <div>
+                  <input 
+                    type="text"
+                    placeholder="प्रश्न लेख्नुहोस् (उदा: Course सुरु गरेपछि कति समयमा सर्टिफिकेट पाइन्छ?)..."
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+                <div>
+                  <textarea 
+                    rows={2}
+                    placeholder="विस्तृत उत्तर यहाँ लेख्नुहोस्..."
+                    value={newAnswer}
+                    onChange={(e) => setNewAnswer(e.target.value)}
+                    className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2 text-xs transition outline-hidden font-medium text-slate-800"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddNewFaq}
+                  className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
+                >
+                  <Plus className="w-4 h-4" /> Add FAQ To List
+                </button>
+              </div>
+
+              {/* Current FAQs List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">
+                    📋 Current FAQs on Website ({localFaqs.length})
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleResetFaqsToDefault}
+                    className="text-slate-500 hover:text-purple-700 text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Reset Defaults
+                  </button>
+                </div>
+
+                <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                  {localFaqs.map((faq, idx) => (
+                    <div 
+                      key={idx}
+                      className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs hover:border-purple-300 transition space-y-2"
+                    >
+                      {editingFaqIndex === idx ? (
+                        /* Editing Form */
+                        <div className="space-y-3 bg-purple-50/50 p-3 rounded-xl border border-purple-200">
+                          <div>
+                            <label className="block text-[9px] font-black uppercase text-purple-800 mb-1">Edit Question:</label>
+                            <input 
+                              type="text"
+                              value={editQuestion}
+                              onChange={(e) => setEditQuestion(e.target.value)}
+                              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-hidden"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black uppercase text-purple-800 mb-1">Edit Answer:</label>
+                            <textarea 
+                              rows={3}
+                              value={editAnswer}
+                              onChange={(e) => setEditAnswer(e.target.value)}
+                              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-xs font-medium text-slate-800 outline-hidden"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateFaq(idx)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-1.5 rounded-lg text-xs transition cursor-pointer"
+                            >
+                              Save FAQ
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingFaqIndex(null)}
+                              className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Display View */
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 grow">
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black flex items-center justify-center shrink-0">
+                                {idx + 1}
+                              </span>
+                              <h5 className="text-xs sm:text-sm font-black text-slate-900">
+                                {faq.question}
+                              </h5>
+                            </div>
+                            <p className="text-xs text-slate-600 font-medium leading-relaxed pl-7">
+                              {faq.answer}
+                            </p>
+                          </div>
+
+                          {/* Action tools */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveFaq(idx, 'up')}
+                              disabled={idx === 0}
+                              className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition disabled:opacity-30 cursor-pointer"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveFaq(idx, 'down')}
+                              disabled={idx === localFaqs.length - 1}
+                              className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition disabled:opacity-30 cursor-pointer"
+                              title="Move Down"
+                            >
+                              <ArrowDown className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingFaqIndex(idx);
+                                setEditQuestion(faq.question);
+                                setEditAnswer(faq.answer);
+                              }}
+                              className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                              title="Edit Question"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteFaq(idx)}
+                              className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              title="Delete Question"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Save All FAQs to Firebase Button */}
+              <div className="pt-3 border-t border-slate-100 flex gap-3">
+                <button
+                  type="button"
+                  disabled={isSavingFaqs}
+                  onClick={handleSaveFaqsToCloud}
+                  className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSavingFaqs ? 'Publishing to Cloud...' : '💾 Save FAQs to Cloud'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 4: OVERALL SITE & BRANDING SETTINGS */}
+          {/* ========================================================================= */}
+          {activeTab === 'overall' && (
+            <form onSubmit={handleSaveOverallSettings} className="space-y-6">
+              <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 text-xs text-purple-950 font-semibold leading-relaxed flex items-start gap-3">
+                <span className="text-base select-none">⚙️</span>
+                <div>
+                  <strong className="font-black text-purple-900">Overall Website & Global Branding Settings</strong>
+                  <p className="mt-0.5 text-purple-800">
+                    यहाँबाट सम्पूर्ण वेबसाइटको मुख्य शीर्षक (Headline), सबटाइटल, Notice Announcement Banner, सपोर्ट ईमेल/फोन, र Certificate मा छापिने Director र CEO को नाम परिवर्तन गर्न सक्नुहुन्छ।
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Website Top Headline (मुख्य ब्यानर शीर्षक) *
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={siteTitle}
+                    onChange={(e) => setSiteTitle(e.target.value)}
+                    placeholder="उदा: TOP AI COURSE NEPAL 🇳🇵"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Website Tagline / Subtitle (उप-शीर्षक) *
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={siteTagline}
+                    onChange={(e) => setSiteTagline(e.target.value)}
+                    placeholder="उदा: Nepal's #1 AI Video Editing & Learning Platform"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] font-black uppercase text-slate-500">
+                      Top Announcement Notice Banner Text
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                      <input 
+                        type="checkbox"
+                        checked={showNoticeBanner}
+                        onChange={(e) => setShowNoticeBanner(e.target.checked)}
+                        className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                      />
+                      <span>Show Notice Banner on Website</span>
+                    </label>
+                  </div>
+                  <input 
+                    type="text"
+                    value={noticeBannerText}
+                    onChange={(e) => setNoticeBannerText(e.target.value)}
+                    placeholder="उदा: 🎉 New AI Tools & YouTube Blueprint Masterclasses Live! 50% Early Bird Discount."
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Support Email Address *
+                  </label>
+                  <input 
+                    type="email"
+                    required
+                    value={supportEmail}
+                    onChange={(e) => setSupportEmail(e.target.value)}
+                    placeholder="उदा: ai.clipzone.edu@gmail.com"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Support Phone Number *
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={supportPhone}
+                    onChange={(e) => setSupportPhone(e.target.value)}
+                    placeholder="उदा: 9763323268"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Certificate Director Authority Name
+                  </label>
+                  <input 
+                    type="text"
+                    value={certificateDirectorName}
+                    onChange={(e) => setCertificateDirectorName(e.target.value)}
+                    placeholder="उदा: Director"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Certificate Founder/CEO Authority Name
+                  </label>
+                  <input 
+                    type="text"
+                    value={certificateCeoName}
+                    onChange={(e) => setCertificateCeoName(e.target.value)}
+                    placeholder="उदा: Founder/CEO (AI Clipzone)"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-3 border-t border-slate-100 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isSavingSiteSettings}
+                  className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSavingSiteSettings ? 'Saving to Firebase...' : '💾 Save Overall Site Settings'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSiteTitle(DEFAULT_SITE_SETTINGS.siteTitle || 'TOP AI COURSE NEPAL 🇳🇵');
+                    setSiteTagline(DEFAULT_SITE_SETTINGS.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform");
+                    setNoticeBannerText(DEFAULT_SITE_SETTINGS.noticeBannerText || '');
+                    setShowNoticeBanner(true);
+                    setSupportPhone(DEFAULT_SITE_SETTINGS.supportPhone || '9763323268');
+                    setSupportEmail(DEFAULT_SITE_SETTINGS.supportEmail || 'ai.clipzone.edu@gmail.com');
+                    setCertificateDirectorName(DEFAULT_SITE_SETTINGS.certificateDirectorName || 'Director');
+                    setCertificateCeoName(DEFAULT_SITE_SETTINGS.certificateCeoName || 'Founder/CEO (AI Clipzone)');
+                    showToast('Reset site settings form to default values. Click Save to apply.', 'info');
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 5: COURSE CATALOG MANAGER */}
+          {/* ========================================================================= */}
+          {activeTab === 'courses' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">
+                    📚 Dynamic Course Catalog ({courses.length} courses)
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Add new courses with custom chapters, Drive/YouTube videos, price tags, and thumbnail graphics.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onCreateCourseClick();
+                  }}
+                  className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center gap-1.5 uppercase tracking-wider shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Add New Course
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {courses.map((course) => (
+                  <div 
+                    key={course.id}
+                    className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex items-start gap-3 hover:border-purple-300 transition"
+                  >
+                    <img 
+                      src={course.image} 
+                      alt={course.title} 
+                      className="w-20 h-20 rounded-xl object-cover border border-slate-100 shrink-0 bg-slate-100"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400';
+                      }}
+                    />
+                    <div className="grow space-y-1 overflow-hidden">
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-700 bg-purple-50 text-[10px] font-black px-2 py-0.5 rounded border border-purple-200">
+                          {course.price}
+                        </span>
+                        <span className="text-slate-500 text-[10px] font-bold">
+                          🎬 {course.videos?.length || 0} Videos
+                        </span>
+                      </div>
+                      <h5 className="text-xs font-black text-slate-900 truncate">
+                        {course.title}
+                      </h5>
+                      <p className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                        ID: {course.id}
+                      </p>
+                      
+                      <div className="flex items-center gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onEditCourseClick(course);
+                          }}
+                          className="bg-slate-100 hover:bg-purple-100 text-purple-700 font-bold px-2.5 py-1 rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteCourseClick(course.id)}
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2.5 py-1 rounded-lg text-[10px] transition cursor-pointer flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Bottom Modal Footer */}
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between shrink-0 text-xs text-slate-400 font-medium">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            AI Clipzone Admin Console
+          </span>
+          <button
+            onClick={onClose}
+            className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2 rounded-xl transition cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};

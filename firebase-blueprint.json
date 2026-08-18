@@ -146,6 +146,73 @@
         }
       },
       "required": ["id", "title", "price", "amount", "message", "learn", "image", "videos"]
+    },
+    "PaymentQrConfig": {
+      "title": "PaymentQrConfig",
+      "description": "System payment QR code, eSewa ID, bank and payment checkout configuration",
+      "type": "object",
+      "properties": {
+        "esewaId": { "type": "string" },
+        "accountName": { "type": "string" },
+        "bankName": { "type": "string" },
+        "bankAccountNo": { "type": "string" },
+        "bankBranch": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "qrImageUrl": { "type": "string" },
+        "paymentInstruction": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["esewaId", "accountName", "whatsappNumber"]
+    },
+    "FAQConfig": {
+      "title": "FAQConfig",
+      "description": "Dynamic FAQs collection and questions list configuration",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "answer": { "type": "string" }
+            },
+            "required": ["question", "answer"]
+          }
+        },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["items"]
+    },
+    "SiteSettingsConfig": {
+      "title": "SiteSettingsConfig",
+      "description": "Global website banner, contact info, institute branding, logo URLs, and certificate design & signatures",
+      "type": "object",
+      "properties": {
+        "siteTitle": { "type": "string" },
+        "siteTagline": { "type": "string" },
+        "instituteName": { "type": "string" },
+        "instituteLogoUrl": { "type": "string" },
+        "noticeBannerText": { "type": "string" },
+        "showNoticeBanner": { "type": "boolean" },
+        "supportEmail": { "type": "string" },
+        "supportPhone": { "type": "string" },
+        "certificateTitle": { "type": "string" },
+        "certificateSubtitle": { "type": "string" },
+        "certificateInstituteName": { "type": "string" },
+        "certificateLogoUrl": { "type": "string" },
+        "certificateDescription": { "type": "string" },
+        "certificateDirectorName": { "type": "string" },
+        "certificateDirectorTitle": { "type": "string" },
+        "certificateDirectorSignatureUrl": { "type": "string" },
+        "certificateCeoName": { "type": "string" },
+        "certificateCeoTitle": { "type": "string" },
+        "certificateCeoSignatureUrl": { "type": "string" },
+        "certificateTheme": { "type": "string" },
+        "certificateStampUrl": { "type": "string" },
+        "certificateSealText": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
     }
   },
   "firestore": {
@@ -160,6 +227,18 @@
     "courses/{courseId}": {
       "schema": "Course",
       "description": "Collection tracking dynamic courses available for enrollment"
+    },
+    "system/payment_qr": {
+      "schema": "PaymentQrConfig",
+      "description": "Document holding dynamic payment QR and checkout credentials"
+    },
+    "system/faqs": {
+      "schema": "FAQConfig",
+      "description": "Document holding dynamic FAQs list"
+    },
+    "system/site_settings": {
+      "schema": "SiteSettingsConfig",
+      "description": "Document holding global website branding and settings"
     }
   }
 }

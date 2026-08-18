@@ -1,4 +1,40 @@
-import { Course, Testimonial, FAQItem } from './types';
+import { Course, Testimonial, FAQItem, PaymentQrConfig, SiteSettingsConfig } from './types';
+
+export const DEFAULT_PAYMENT_CONFIG: PaymentQrConfig = {
+  esewaId: "9763323268",
+  accountName: "Ayush Chaurasiya",
+  bankName: "Global IME / Nabil Bank",
+  bankAccountNo: "",
+  bankBranch: "",
+  whatsappNumber: "9763323268",
+  qrImageUrl: "",
+  paymentInstruction: "📌 भुक्तानी निर्देशन: QR स्क्यान गरी वा eSewa ID मा रकम पठाएर स्क्रीनसट WhatsApp मा पठाउनुहोस्।",
+};
+
+export const DEFAULT_SITE_SETTINGS: SiteSettingsConfig = {
+  siteTitle: "TOP AI COURSE NEPAL 🇳🇵",
+  siteTagline: "Nepal's #1 AI Video Editing & Learning Platform",
+  instituteName: "AI Clipzone",
+  instituteLogoUrl: "",
+  noticeBannerText: "🎉 New AI Tools & YouTube Blueprint Masterclasses Live! 50% Early Bird Discount.",
+  showNoticeBanner: true,
+  supportEmail: "ai.clipzone.edu@gmail.com",
+  supportPhone: "9763323268",
+  certificateTitle: "CERTIFICATE",
+  certificateSubtitle: "OF ACHIEVEMENT",
+  certificateInstituteName: "AI CLIPZONE NEPAL",
+  certificateLogoUrl: "",
+  certificateDescription: "an advanced training in 30+ AI Tools covering AI Video Creation, AI Image Generation, AI Music & Song Creation, Graphic Design, Website Development, Professional Presentations, and other AI-powered digital skills.",
+  certificateDirectorName: "Director",
+  certificateDirectorTitle: "Course Director",
+  certificateDirectorSignatureUrl: "",
+  certificateCeoName: "Founder/CEO (AI Clipzone)",
+  certificateCeoTitle: "Founder & CEO",
+  certificateCeoSignatureUrl: "",
+  certificateTheme: "gold",
+  certificateStampUrl: "",
+  certificateSealText: "AI CLIPZONE • OFFICIALLY VERIFIED •",
+};
 
 export const COURSES: Course[] = [
   {
