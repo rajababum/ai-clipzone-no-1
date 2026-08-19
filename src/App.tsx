@@ -1766,7 +1766,7 @@ export default function App() {
 
   const handleInstallPwa = async () => {
     if (isAppInstalled) {
-      showToast(`✅ ${siteSettings.instituteName || 'AI Clipzone'} App is already installed on your device!`, 'success');
+      showToast(`✅ ${siteSettings.instituteName || 'AI Clipzone'} App पहिले नै इन्स्टल भइसकेको छ! (App is already installed)`, 'success');
       return;
     }
     if (deferredPrompt) {
@@ -1774,8 +1774,9 @@ export default function App() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Added to Home Screen!`, 'success');
+          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो! (App Installed!)`, 'success');
           setIsAppInstalled(true);
+          setShowPwaInstallModal(false);
         }
         setDeferredPrompt(null);
         return;
@@ -1792,7 +1793,7 @@ export default function App() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Added to Home Screen!`, 'success');
+          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
           setIsAppInstalled(true);
           setShowPwaInstallModal(false);
           setDeferredPrompt(null);
@@ -1807,7 +1808,7 @@ export default function App() {
     const isInIframe = typeof window !== 'undefined' && window.top !== window.self;
     if (isInIframe) {
       window.open(window.location.href, '_blank');
-      showToast('📲 Full Tab मा खुल्यो! Chrome Menu (⋮) -> "Add to Home Screen" थिच्नुहोस्!', 'info');
+      showToast('📲 Full Screen मा खुल्यो! तुरुन्त App Install गर्नुहोस्!', 'info');
       setShowPwaInstallModal(false);
       return;
     }
@@ -1817,7 +1818,7 @@ export default function App() {
       setIsInstallingPwa(false);
       setShowPwaInstallModal(false);
       setIsAppInstalled(true);
-      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Added to Home Screen!`, 'success');
+      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
     }, 1000);
   };
 
@@ -2345,7 +2346,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-premium-mesh bg-slate-50/90 text-slate-800 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden flex flex-col justify-between relative">
+    <div className="min-h-screen bg-premium-mesh bg-slate-50/90 text-slate-800 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden flex flex-col justify-between relative pb-20 sm:pb-0">
       {/* Subtle Luxury Ambient Background Light Orbs & Grid Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
         <div className="absolute -top-32 -left-32 w-[550px] h-[550px] bg-purple-300/25 rounded-full blur-[130px]" />
@@ -2500,7 +2501,20 @@ export default function App() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
+              {/* Direct 1-Click Install App Header Button */}
+              {!isAppInstalled && (
+                <button
+                  onClick={handleInstallPwa}
+                  className="px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer border border-amber-300"
+                  title="Install Mobile & Desktop App"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">Install App</span>
+                  <span className="xs:hidden">App</span>
+                </button>
+              )}
+
               {/* Dropdown Menu Button */}
               <div className="relative">
                 <button
@@ -5699,7 +5713,7 @@ export default function App() {
                 <div>
                   <h4 className="text-lg font-semibold text-white">Installing {siteSettings.instituteName || 'App'}...</h4>
                   <p className="text-xs text-amber-400 font-medium mt-1">
-                    होम स्क्रिनमा थपिँदैछ, कृपया १ सेकेन्ड पर्खनुहोस्...
+                    एप इन्स्टल गरिँदैछ, कृपया १ सेकेन्ड पर्खनुहोस्...
                   </p>
                 </div>
                 <div className="w-full bg-slate-700/80 h-2.5 rounded-full overflow-hidden relative mt-3">
@@ -5754,6 +5768,92 @@ export default function App() {
           </motion.div>
         </div>
       )}
+
+      {/* NATIVE MOBILE APP BOTTOM NAVIGATION BAR */}
+      <nav aria-label="Mobile Navigation" className="sm:hidden fixed bottom-0 left-0 right-0 z-[250] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/90 px-3 py-1.5 flex items-center justify-around shadow-2xl pb-[calc(env(safe-area-inset-bottom,0px)+6px)] select-none">
+        {/* Home */}
+        <button
+          onClick={() => {
+            setCurrentView('home');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            currentView === 'home'
+              ? 'text-amber-400 font-extrabold scale-105'
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Home className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] tracking-tight">Home</span>
+        </button>
+
+        {/* Classroom / My Courses */}
+        <button
+          onClick={() => {
+            setCurrentView('classroom');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all relative cursor-pointer ${
+            currentView === 'classroom'
+              ? 'text-amber-400 font-extrabold scale-105'
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <BookOpen className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] tracking-tight">Classroom</span>
+          {activeCourseIds.length > 0 && (
+            <span className="absolute top-0.5 right-2 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse ring-2 ring-zinc-950" />
+          )}
+        </button>
+
+        {/* Certificate */}
+        <button
+          onClick={() => {
+            if (activeCourseIds.length > 0) {
+              const activeCourse = courses.find(c => activeCourseIds.includes(c.id)) || courses[0];
+              setCertificateCourseTitle(activeCourse.title);
+              setCertificateStudentName(currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Student Learner');
+              setCertificateCode(getCourseActivationCode(activeCourse.id) || 'AICLIP-CERT-2083');
+              setShowCertificateModal(true);
+            } else {
+              showToast('प्रमाणपत्र हेर्न पहिले कोर्स एक्टिभ गर्नुहोस्। (Activate course to view certificate)', 'info');
+              setShowCodeInputModal(true);
+            }
+          }}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer"
+        >
+          <Award className="w-5 h-5 mb-0.5 text-amber-300" />
+          <span className="text-[10px] tracking-tight">Certificate</span>
+        </button>
+
+        {/* AI Assistant Chat */}
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer relative"
+        >
+          <Bot className="w-5 h-5 mb-0.5 text-purple-400" />
+          <span className="text-[10px] tracking-tight">AI Help</span>
+        </button>
+
+        {/* Profile or Install */}
+        {!isAppInstalled ? (
+          <button
+            onClick={handleInstallPwa}
+            className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-amber-400 bg-amber-400/10 border border-amber-400/40 transition-all font-black cursor-pointer animate-pulse"
+          >
+            <Download className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] tracking-tight">Install</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer"
+          >
+            <User className="w-5 h-5 mb-0.5 text-blue-400" />
+            <span className="text-[10px] tracking-tight">{currentUser ? 'Account' : 'Login'}</span>
+          </button>
+        )}
+      </nav>
 
     </div>
   );
