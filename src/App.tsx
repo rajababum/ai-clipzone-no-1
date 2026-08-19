@@ -1805,6 +1805,27 @@ export default function App() {
       showToast(`✅ ${siteSettings.instituteName || 'Ai Clipzone'} App पहिले नै इन्स्टल भइसकेको छ! (App is already installed)`, 'success');
       return;
     }
+
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        if (choiceResult?.outcome === 'accepted') {
+          setIsAppInstalled(true);
+          localStorage.setItem('clipzone_pwa_installed', 'true');
+          setShowPwaInstallModal(false);
+          setIsInstallingPwa(false);
+          triggerInstallNotification();
+          showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
+          setDeferredPrompt(null);
+          return;
+        }
+        setDeferredPrompt(null);
+      } catch (err) {
+        console.warn('Direct install prompt error:', err);
+      }
+    }
+
     setShowPwaInstallModal(true);
   };
 
