@@ -1,10 +1,14 @@
 // AI Clipzone Nepal - Advanced PWA Service Worker
-const CACHE_NAME = 'aiclipzone-pwa-v2';
+const CACHE_NAME = 'aiclipzone-pwa-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/logo.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-192.png',
+  '/icon-maskable-512.png',
   '/pwa-icon.svg',
   '/apple-touch-icon.svg',
   '/robots.txt',
