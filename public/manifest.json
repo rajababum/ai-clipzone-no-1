@@ -2,7 +2,7 @@
   "short_name": "Ai Clipzone",
   "name": "Ai Clipzone",
   "description": "Nepal's #1 AI Learning Platform - Master AI Video Creation, Prompt Engineering & Digital Skills.",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui"],
