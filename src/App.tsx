@@ -5706,14 +5706,14 @@ export default function App() {
         />
       )}
 
-      {/* PWA INSTALLATION NATIVE DIALOG MATCHING USER SCREENSHOT */}
+      {/* PWA INSTALLATION NATIVE DIALOG */}
       {showPwaInstallModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[5000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 15 }}
-            className="bg-[#28292c] text-white rounded-[28px] max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-700/50 relative font-sans overflow-hidden"
+            className="bg-[#1f2023] text-white rounded-[28px] max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-700/60 relative font-sans overflow-hidden"
           >
             {isInstallingPwa ? (
               <div className="py-4 text-center space-y-4">
@@ -5739,13 +5739,22 @@ export default function App() {
             ) : (
               <>
                 {/* Title */}
-                <h3 className="text-xl font-medium text-slate-100 mb-6 text-left tracking-tight">
-                  Install app
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-100 text-left tracking-tight flex items-center gap-2">
+                    <Smartphone className="w-5 h-5 text-amber-400" />
+                    Install App
+                  </h3>
+                  <button 
+                    onClick={() => setShowPwaInstallModal(false)}
+                    className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
                 {/* App Info Row */}
-                <div className="flex items-center gap-4 my-2">
-                  <div className="w-16 h-12 rounded-xl bg-black border border-zinc-700 p-1 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
+                <div className="flex items-center gap-3.5 my-3 p-3 bg-slate-900/80 rounded-2xl border border-slate-800">
+                  <div className="w-14 h-12 rounded-xl bg-black border border-zinc-700 p-1 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
                     <img 
                       src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
                       alt={siteSettings.instituteName || "App Logo"} 
@@ -5755,28 +5764,48 @@ export default function App() {
                     />
                   </div>
                   <div className="min-w-0 text-left">
-                    <h4 className="text-lg font-medium text-white truncate tracking-normal">
+                    <h4 className="text-base font-bold text-white truncate tracking-normal">
                       {siteSettings.instituteName || 'AI Clipzone'}
                     </h4>
-                    <p className="text-sm text-slate-400 truncate font-normal mt-0.5">
-                      {typeof window !== 'undefined' ? window.location.hostname || 'aiclipzone.netlify.app' : 'aiclipzone.netlify.app'}
+                    <p className="text-xs text-amber-400 font-medium">
+                      Mobile App Mode (PWA)
                     </p>
                   </div>
                 </div>
 
+                {/* Mobile Installation Steps Guide */}
+                <div className="my-3 text-left space-y-2 text-xs text-slate-300 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80">
+                  <p className="font-bold text-amber-300 text-[11px] uppercase tracking-wider mb-1">
+                    📱 मोबाइलमा कसरी इन्स्टल गर्ने?
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <span className="bg-amber-400/20 text-amber-300 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">Chrome</span>
+                    <span>ब्राउजरको माथि दायाँ <b>3 dots (⋮)</b> थिच्नुहोस् र <b>"Install app"</b> (वा <b>"Add to Home screen"</b>) छान्नुहोस्।</span>
+                  </div>
+                  <div className="flex items-start gap-2 pt-1 border-t border-slate-800">
+                    <span className="bg-blue-400/20 text-blue-300 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">iPhone</span>
+                    <span>Safari मा तलको <b>Share (⎋)</b> बटन थिच्नुहोस् र <b>"Add to Home Screen" (+)</b> छान्नुहोस्।</span>
+                  </div>
+                </div>
+
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-3 mt-8 pt-2">
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-2 mt-5">
                   <button
-                    onClick={() => setShowPwaInstallModal(false)}
-                    className="text-[#a8c7fa] hover:bg-white/10 text-sm font-medium px-5 py-2.5 rounded-full transition cursor-pointer active:bg-white/20"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.open(window.location.href, '_blank');
+                      }
+                      setShowPwaInstallModal(false);
+                    }}
+                    className="w-full sm:w-auto text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer"
                   >
-                    Cancel
+                    Open in Chrome / Browser 🌐
                   </button>
                   <button
                     onClick={handleConfirmInstallModal}
-                    className="text-[#a8c7fa] hover:bg-white/10 text-sm font-semibold px-5 py-2.5 rounded-full transition cursor-pointer active:bg-white/20"
+                    className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-black px-5 py-2.5 rounded-xl transition cursor-pointer shadow-lg hover:shadow-amber-500/20"
                   >
-                    Install
+                    Install Now 📲
                   </button>
                 </div>
               </>
