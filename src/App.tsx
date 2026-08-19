@@ -2401,16 +2401,17 @@ export default function App() {
               title={isAdminActivated ? "Admin controls" : "AI Clipzone Nepal - Home"}
             >
               {/* 3D Silver Logo prominently embedded on black header */}
-              <div className="h-10 sm:h-12 md:h-13 flex items-center justify-center bg-black overflow-hidden group-hover:scale-105 transition-transform duration-200 shrink-0">
+              <div className="h-10 sm:h-12 md:h-14 flex items-center justify-center bg-black overflow-hidden group-hover:scale-105 transition-transform duration-200 shrink-0">
                 <img 
                   src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
                   alt={siteSettings.instituteName || "AI CLIPZONE"}
-                  className="h-10 sm:h-12 md:h-13 w-auto max-w-[130px] sm:max-w-[170px] md:max-w-[200px] object-contain shrink-0"
+                  className="h-10 sm:h-12 md:h-14 w-auto max-w-[140px] sm:max-w-[180px] md:max-w-[220px] object-contain shrink-0 filter drop-shadow-md"
+                  crossOrigin="anonymous"
                   referrerPolicy="no-referrer"
                   loading="eager"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    if (target.src !== REMOTE_LOGO_URL && target.src !== LOGO_DATA_URL) {
+                    if (target.src !== LOGO_DATA_URL) {
                       target.src = LOGO_DATA_URL;
                     }
                   }}

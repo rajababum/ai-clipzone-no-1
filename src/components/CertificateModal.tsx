@@ -183,6 +183,24 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
         }
       }
 
+      // Ensure all images inside node are fully decoded and loaded
+      const images = Array.from(node.querySelectorAll('img'));
+      await Promise.all(
+        images.map(async (img) => {
+          if (!img.complete) {
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          }
+          if (typeof img.decode === 'function') {
+            try {
+              await img.decode();
+            } catch (e) {}
+          }
+        })
+      );
+
       // Save original transform style
       const origTransform = node.style.transform;
       const origTransformOrigin = node.style.transformOrigin;
@@ -196,15 +214,16 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
       let dataUrl = '';
 
       try {
-        // html2canvas renders directly to 2D context using active loaded fonts
+        // html2canvas renders directly to 2D context using active loaded fonts and high DPI
         const canvas = await html2canvas(node, {
-          scale: 2.0,
+          scale: 2.5,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#000000',
           width: 1000,
           height: 707,
           logging: false,
+          imageTimeout: 10000,
         });
         dataUrl = canvas.toDataURL('image/png', 1.0);
       } catch (canvasErr) {
@@ -214,7 +233,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
         dataUrl = await toPng(node, {
           quality: 1.0,
-          pixelRatio: 2.0,
+          pixelRatio: 2.5,
           cacheBust: false,
           fontEmbedCSS: CERTIFICATE_EMBEDDED_FONTS_CSS,
           skipFonts: false,
@@ -442,11 +461,12 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                     <img 
                       src={activeLogo} 
                       alt={instituteName || 'Institute Logo'}
+                      crossOrigin="anonymous"
                       referrerPolicy="no-referrer"
                       loading="eager"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (target.src !== REMOTE_LOGO_URL && target.src !== LOGO_DATA_URL) {
+                        if (target.src !== LOGO_DATA_URL) {
                           target.src = LOGO_DATA_URL;
                         }
                       }}

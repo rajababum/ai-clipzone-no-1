@@ -320,7 +320,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   };
 
   const handleResetFaqsToDefault = () => {
-    if (!window.confirm('Reset FAQ list back to original default questions?')) return;
     setLocalFaqs(INITIAL_DEFAULT_FAQS);
     showToast('Reset FAQs to default. Click Save to publish.', 'info');
   };
