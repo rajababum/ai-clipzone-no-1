@@ -366,6 +366,8 @@ export default function App() {
 
         if (err && err.code === 'permission-denied') {
           handleFirestoreError(err, OperationType.GET, 'courses');
+        } else {
+          showToast('Loaded database from local cache.', 'info');
         }
       }
     };
