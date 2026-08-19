@@ -7,10 +7,16 @@
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#202124",
-  "theme_color": "#202124",
+  "background_color": "#000000",
+  "theme_color": "#5b21b6",
   "categories": ["education", "productivity", "utilities"],
   "icons": [
+    {
+      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
+      "type": "image/png",
+      "sizes": "1074x1074 512x512 192x192",
+      "purpose": "any maskable"
+    },
     {
       "src": "/pwa-icon.svg",
       "type": "image/svg+xml",
