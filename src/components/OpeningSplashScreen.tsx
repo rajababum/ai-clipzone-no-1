@@ -3,6 +3,34 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LOGO_DATA_URL, REMOTE_LOGO_URL } from '../logo';
 import { Sparkles } from 'lucide-react';
 
+export function checkIsInstalledApp(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    // 1. Check if running in standalone display mode (PWA installed app)
+    const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    const isMinimalUI = window.matchMedia && window.matchMedia('(display-mode: minimal-ui)').matches;
+    const isFullscreen = window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches;
+    
+    // 2. Check iOS Safari standalone mode
+    const isIOSStandalone = !!(window.navigator as any).standalone;
+    
+    // 3. Check Android Trusted Web Activity / WebView referrer
+    const isAndroidApp = typeof document !== 'undefined' && document.referrer && document.referrer.includes('android-app://');
+    
+    // 4. Check URL parameter indicators (e.g. ?source=pwa or ?mode=app or ?app=true)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAppParam = urlParams.get('source') === 'pwa' || 
+                       urlParams.get('mode') === 'app' || 
+                       urlParams.get('utm_source') === 'homescreen' ||
+                       urlParams.get('app') === 'true';
+
+    return isStandalone || isMinimalUI || isFullscreen || isIOSStandalone || isAndroidApp || isAppParam;
+  } catch (e) {
+    return false;
+  }
+}
+
 interface OpeningSplashScreenProps {
   logoUrl?: string;
   siteTitle?: string;

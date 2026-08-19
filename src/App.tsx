@@ -61,7 +61,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndP
 import { db, auth } from './firebase';
 import { CertificateModal } from './components/CertificateModal';
 import { AdminDashboardModal } from './components/AdminDashboardModal';
-import { OpeningSplashScreen } from './components/OpeningSplashScreen';
+import { OpeningSplashScreen, checkIsInstalledApp } from './components/OpeningSplashScreen';
 import { LOGO_DATA_URL, REMOTE_LOGO_URL } from './logo';
 
 enum OperationType {
@@ -141,8 +141,8 @@ function getSecureYouTubeEmbedUrl(url: string, autoplay: boolean = false): strin
 }
 
 export default function App() {
-  // App Opening Splash screen state
-  const [showOpeningSplash, setShowOpeningSplash] = useState(true);
+  // App Opening Splash screen state (Triggered ONLY in installed/standalone App mode, not website)
+  const [showOpeningSplash, setShowOpeningSplash] = useState(() => checkIsInstalledApp());
 
   // Admin Mode states
   const [showAdminMenu, setShowAdminMenu] = useState(false);
