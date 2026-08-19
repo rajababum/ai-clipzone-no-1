@@ -1,6 +1,6 @@
 {
-  "id": "/",
-  "short_name": "Ai Clipzone",
+  "id": "ai.clipzone.nepal.app",
+  "short_name": "AI Clipzone",
   "name": "AI Clipzone Nepal",
   "description": "Nepal's #1 AI Learning Platform - Master AI Video Creation, Prompt Engineering & Digital Skills.",
   "start_url": "/",
@@ -10,6 +10,8 @@
   "orientation": "portrait-primary",
   "background_color": "#09090b",
   "theme_color": "#09090b",
+  "lang": "en-US",
+  "dir": "ltr",
   "prefer_related_applications": false,
   "categories": ["education", "productivity", "utilities"],
   "icons": [
@@ -17,6 +19,18 @@
       "src": "/logo.png",
       "type": "image/png",
       "sizes": "192x192 512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512 1074x1074",
       "purpose": "any maskable"
     },
     {
@@ -30,12 +44,22 @@
       "type": "image/svg+xml",
       "sizes": "180x180",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
+      "sizes": "1074x1074",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AI Clipzone Courses & Classroom"
     },
     {
       "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
+      "sizes": "1074x1074",
       "type": "image/png",
-      "sizes": "192x192 512x512 1074x1074",
-      "purpose": "any maskable"
+      "form_factor": "wide",
+      "label": "AI Clipzone Nepal Dashboard"
     }
   ],
   "shortcuts": [

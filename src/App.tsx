@@ -479,6 +479,9 @@ export default function App() {
 
   // Check active device sessions to enforce single device login
   const checkActiveDeviceSessions = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return;
+    }
     const deviceId = getOrCreateDeviceId();
     try {
       const activeCodesStr = localStorage.getItem('clipzone_active_codes');
@@ -494,7 +497,7 @@ export default function App() {
 
       for (const code of activeCodes) {
         try {
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 1500));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 2000));
           const keyDocSnap: any = await Promise.race([
             getDoc(doc(db, 'activation_keys', code)),
             timeoutPromise
@@ -544,7 +547,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.error('Error checking active device sessions:', err);
+      // Graceful offline fallback
     }
   };
 
@@ -587,7 +590,7 @@ export default function App() {
     checkActiveDeviceSessions();
     const interval = setInterval(() => {
       checkActiveDeviceSessions();
-    }, 12000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
