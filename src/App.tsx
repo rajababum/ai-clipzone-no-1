@@ -1769,36 +1769,24 @@ export default function App() {
 
   const handleInstallPwa = async () => {
     if (isAppInstalled) {
-      showToast(`✅ ${siteSettings.instituteName || 'AI Clipzone'} App पहिले नै इन्स्टल भइसकेको छ! (App is already installed)`, 'success');
+      showToast(`✅ ${siteSettings.instituteName || 'Ai Clipzone'} App पहिले नै इन्स्टल भइसकेको छ! (App is already installed)`, 'success');
       return;
-    }
-    if (deferredPrompt) {
-      try {
-        deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
-        if (choiceResult?.outcome === 'accepted') {
-          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो! (App Installed!)`, 'success');
-          setIsAppInstalled(true);
-          setShowPwaInstallModal(false);
-        }
-        setDeferredPrompt(null);
-        return;
-      } catch (err) {
-        console.warn('Install prompt error:', err);
-      }
     }
     setShowPwaInstallModal(true);
   };
 
   const handleConfirmInstallModal = async () => {
+    setIsInstallingPwa(true);
+
     if (deferredPrompt) {
       try {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
           setIsAppInstalled(true);
           setShowPwaInstallModal(false);
+          setIsInstallingPwa(false);
+          showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
           setDeferredPrompt(null);
           return;
         }
@@ -1810,19 +1798,21 @@ export default function App() {
 
     const isInIframe = typeof window !== 'undefined' && window.top !== window.self;
     if (isInIframe) {
-      window.open(window.location.href, '_blank');
-      showToast('📲 Full Screen मा खुल्यो! तुरुन्त App Install गर्नुहोस्!', 'info');
-      setShowPwaInstallModal(false);
+      setTimeout(() => {
+        setIsInstallingPwa(false);
+        setShowPwaInstallModal(false);
+        window.open(window.location.href, '_blank');
+        showToast('📲 Full Screen मा खुल्यो! तुरुन्त App Install गर्नुहोस्!', 'info');
+      }, 700);
       return;
     }
 
-    setIsInstallingPwa(true);
     setTimeout(() => {
       setIsInstallingPwa(false);
       setShowPwaInstallModal(false);
       setIsAppInstalled(true);
-      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
-    }, 1000);
+      showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
+    }, 1200);
   };
 
   // Toast helper
@@ -5709,106 +5699,82 @@ export default function App() {
         />
       )}
 
-      {/* PWA INSTALLATION NATIVE DIALOG */}
+      {/* PWA INSTALLATION NATIVE DIALOG (Pixel-perfect matching user screenshot) */}
       {showPwaInstallModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[5000] flex items-center justify-center p-4"
+          onClick={() => setShowPwaInstallModal(false)}
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 15 }}
+            initial={{ opacity: 0, scale: 0.94, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 15 }}
-            className="bg-[#1f2023] text-white rounded-[28px] max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-700/60 relative font-sans overflow-hidden"
+            exit={{ opacity: 0, scale: 0.94, y: 15 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#262628] text-white rounded-[28px] max-w-sm sm:max-w-md w-full p-6 sm:p-7 shadow-2xl border border-zinc-700/40 relative font-sans overflow-hidden select-none"
           >
             {isInstallingPwa ? (
-              <div className="py-4 text-center space-y-4">
-                <div className="w-20 h-14 rounded-2xl bg-black border border-zinc-700 p-1 mx-auto flex items-center justify-center shadow-lg animate-bounce overflow-hidden">
+              <div className="py-6 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-black border border-zinc-700 p-1 mx-auto flex items-center justify-center shadow-lg animate-pulse overflow-hidden">
                   <img 
                     src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
-                    alt={siteSettings.instituteName || "App Logo"} 
-                    className="w-full h-full object-contain" 
+                    alt={siteSettings.instituteName || "Ai Clipzone"} 
+                    className="w-full h-full object-contain rounded-full" 
                     referrerPolicy="no-referrer" 
                     onError={(e) => { e.currentTarget.src = LOGO_DATA_URL; }}
                   />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-white">Installing {siteSettings.instituteName || 'App'}...</h4>
-                  <p className="text-xs text-amber-400 font-medium mt-1">
-                    एप इन्स्टल गरिँदैछ, कृपया १ सेकेन्ड पर्खनुहोस्...
+                  <h4 className="text-xl font-normal text-white">Installing {siteSettings.instituteName || 'Ai Clipzone'}...</h4>
+                  <p className="text-sm text-zinc-400 mt-1 font-normal">
+                    एप इन्स्टल गरिँदैछ, कृपया एकछिन पर्खनुहोस्...
                   </p>
                 </div>
-                <div className="w-full bg-slate-700/80 h-2.5 rounded-full overflow-hidden relative mt-3">
-                  <div className="bg-gradient-to-r from-amber-400 to-amber-500 h-full w-full animate-pulse rounded-full"></div>
+                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden relative mt-4">
+                  <div className="bg-[#a8c7fa] h-full w-full animate-pulse rounded-full"></div>
                 </div>
               </div>
             ) : (
               <>
                 {/* Title */}
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-100 text-left tracking-tight flex items-center gap-2">
-                    <Smartphone className="w-5 h-5 text-amber-400" />
-                    Install App
-                  </h3>
-                  <button 
-                    onClick={() => setShowPwaInstallModal(false)}
-                    className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                <h3 className="text-2xl font-normal text-zinc-100 text-left mb-6">
+                  Install app
+                </h3>
 
                 {/* App Info Row */}
-                <div className="flex items-center gap-3.5 my-3 p-3 bg-slate-900/80 rounded-2xl border border-slate-800">
-                  <div className="w-14 h-12 rounded-xl bg-black border border-zinc-700 p-1 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
+                <div className="flex items-center gap-4 my-3 text-left">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black border border-zinc-700/80 p-0.5 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
                     <img 
                       src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
-                      alt={siteSettings.instituteName || "App Logo"} 
-                      className="w-full h-full object-contain" 
+                      alt={siteSettings.instituteName || "Ai Clipzone"} 
+                      className="w-full h-full object-contain rounded-full" 
                       referrerPolicy="no-referrer" 
                       onError={(e) => { e.currentTarget.src = LOGO_DATA_URL; }}
                     />
                   </div>
-                  <div className="min-w-0 text-left">
-                    <h4 className="text-base font-bold text-white truncate tracking-normal">
-                      {siteSettings.instituteName || 'AI Clipzone'}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-2xl font-normal text-white truncate tracking-normal">
+                      {siteSettings.instituteName || 'Ai Clipzone'}
                     </h4>
-                    <p className="text-xs text-amber-400 font-medium">
-                      Mobile App Mode (PWA)
+                    <p className="text-sm sm:text-base text-zinc-400 font-normal truncate mt-0.5">
+                      {typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? 'aiclipzone.vercel.app' : window.location.hostname.replace(/^www\./, '')) : 'aiclipzone.vercel.app'}
                     </p>
                   </div>
                 </div>
 
-                {/* Mobile Installation Steps Guide */}
-                <div className="my-3 text-left space-y-2 text-xs text-slate-300 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80">
-                  <p className="font-bold text-amber-300 text-[11px] uppercase tracking-wider mb-1">
-                    📱 मोबाइलमा कसरी इन्स्टल गर्ने?
-                  </p>
-                  <div className="flex items-start gap-2">
-                    <span className="bg-amber-400/20 text-amber-300 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">Chrome</span>
-                    <span>ब्राउजरको माथि दायाँ <b>3 dots (⋮)</b> थिच्नुहोस् र <b>"Install app"</b> (वा <b>"Add to Home screen"</b>) छान्नुहोस्।</span>
-                  </div>
-                  <div className="flex items-start gap-2 pt-1 border-t border-slate-800">
-                    <span className="bg-blue-400/20 text-blue-300 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">iPhone</span>
-                    <span>Safari मा तलको <b>Share (⎋)</b> बटन थिच्नुहोस् र <b>"Add to Home Screen" (+)</b> छान्नुहोस्।</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center justify-end gap-2 mt-5">
+                {/* Action Buttons: Cancel and Install */}
+                <div className="flex items-center justify-end gap-3 mt-8 pt-2">
                   <button
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.open(window.location.href, '_blank');
-                      }
-                      setShowPwaInstallModal(false);
-                    }}
-                    className="w-full sm:w-auto text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer"
+                    onClick={() => setShowPwaInstallModal(false)}
+                    className="px-5 py-2 rounded-full text-base font-medium text-[#a8c7fa] hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                   >
-                    Open in Chrome / Browser 🌐
+                    Cancel
                   </button>
                   <button
                     onClick={handleConfirmInstallModal}
-                    className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-black px-5 py-2.5 rounded-xl transition cursor-pointer shadow-lg hover:shadow-amber-500/20"
+                    className="px-5 py-2 rounded-full text-base font-medium text-[#a8c7fa] hover:text-white hover:bg-[#a8c7fa]/10 transition-colors cursor-pointer"
                   >
-                    Install Now 📲
+                    Install
                   </button>
                 </div>
               </>
