@@ -1206,19 +1206,11 @@ export default function App() {
       targetCourseId = courses[0].id;
     }
     
-    if (!targetCourseId) {
-      showToast('Please select a course to generate code for!', 'error');
-      return;
-    }
     const selectedCourseData = courses.find(c => c.id === targetCourseId);
-    if (!selectedCourseData) return;
+    const courseTitle = selectedCourseData ? selectedCourseData.title : (courses[0]?.title || 'All Courses Access');
+    const finalCourseId = selectedCourseData ? selectedCourseData.id : (courses[0]?.id || 'course-all');
 
-    const studentName = (studentNameArg !== undefined ? studentNameArg : genStudentName).trim();
-    if (!studentName) {
-      showToast('कृपया विद्यार्थीको नाम राख्नुहोस् (Please enter Student Name)!', 'error');
-      return;
-    }
-
+    const studentName = (studentNameArg !== undefined ? studentNameArg : genStudentName).trim() || 'Student Learner';
     const duration = durationArg || genSelectedDuration || '1year';
 
     // Generate readable random secret code
@@ -1231,8 +1223,8 @@ export default function App() {
       status: 'unused',
       duration: duration,
       createdAt: Date.now(),
-      courseId: selectedCourseData.id,
-      courseTitle: selectedCourseData.title,
+      courseId: finalCourseId,
+      courseTitle: courseTitle,
       studentName: studentName
     };
 
@@ -1304,8 +1296,6 @@ export default function App() {
   };
 
   const handleDeleteActivationKey = async (code: string) => {
-    if (!window.confirm(`Are you sure you want to delete secret code ${code}?`)) return;
-
     // 1. Delete document from Firestore
     try {
       await deleteDoc(doc(db, 'activation_keys', code));
@@ -1762,7 +1752,7 @@ export default function App() {
     const handleAppInstalled = () => {
       setIsAppInstalled(true);
       setDeferredPrompt(null);
-      showToast('🎉 AI Clipzone Nepal App Successfully Installed!', 'success');
+      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone Nepal'} App Successfully Installed!`, 'success');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -1776,7 +1766,7 @@ export default function App() {
 
   const handleInstallPwa = async () => {
     if (isAppInstalled) {
-      showToast('✅ Ai Clipzone App is already installed on your device!', 'success');
+      showToast(`✅ ${siteSettings.instituteName || 'AI Clipzone'} App is already installed on your device!`, 'success');
       return;
     }
     if (deferredPrompt) {
@@ -1784,7 +1774,7 @@ export default function App() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          showToast('🎉 Ai Clipzone App Added to Home Screen!', 'success');
+          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Added to Home Screen!`, 'success');
           setIsAppInstalled(true);
         }
         setDeferredPrompt(null);
@@ -1802,7 +1792,7 @@ export default function App() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          showToast('🎉 Ai Clipzone App Added to Home Screen!', 'success');
+          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Added to Home Screen!`, 'success');
           setIsAppInstalled(true);
           setShowPwaInstallModal(false);
           setDeferredPrompt(null);
@@ -1827,7 +1817,7 @@ export default function App() {
       setIsInstallingPwa(false);
       setShowPwaInstallModal(false);
       setIsAppInstalled(true);
-      showToast('🎉 Ai Clipzone App Added to Home Screen!', 'success');
+      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Added to Home Screen!`, 'success');
     }, 1000);
   };
 
@@ -1950,10 +1940,6 @@ export default function App() {
 
   // Delete Course
   const handleDeleteCourse = async (courseId: string) => {
-    if (!window.confirm('Are you sure you want to remove this course? This action is permanent and cannot be restored.')) {
-      return;
-    }
-
     try {
       // 1. Delete course doc from Firestore
       await deleteDoc(doc(db, 'courses', courseId));
@@ -2153,7 +2139,7 @@ export default function App() {
     setChatMessages([
       {
         sender: 'bot',
-        text: 'नमस्ते! 👋\nम AI Clipzone Nepal को Advanced AI Assistant हुँ।\nहाम्रा कोर्सहरू, Activation Key, Certificate, eSewa Payment वा AI Tools सम्बन्धी केही पनि सोध्नुहोस्!',
+        text: `नमस्ते! 👋\nम ${siteSettings.instituteName || 'AI Clipzone Nepal'} को Advanced AI Assistant हुँ।\nहाम्रा कोर्सहरू, Activation Key, Certificate, eSewa Payment वा AI Tools सम्बन्धी केही पनि सोध्नुहोस्!`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
@@ -2186,19 +2172,19 @@ export default function App() {
     
     // Greeting
     if (q === 'hi' || q === 'hello' || q === 'namaste' || q.includes('नमस्ते') || q === 'hey') {
-      return `नमस्ते! 🙏 AI Clipzone Nepal को आधिकारिक AI Assistant मा यहाँलाई स्वागत छ। म यहाँलाई हाम्रा प्रिमियम AI कोर्षहरू, Activation Code, Certificate, eSewa Payment र AI Tools (Midjourney, ChatGPT, Suno AI, CapCut) सम्बन्धी जुनसुकै सहयोग गर्न तयार छु! 😊`;
+      return `नमस्ते! 🙏 ${siteSettings.instituteName || 'AI Clipzone Nepal'} को आधिकारिक AI Assistant मा यहाँलाई स्वागत छ। म यहाँलाई हाम्रा प्रिमियम AI कोर्षहरू, Activation Code, Certificate, eSewa Payment र AI Tools (Midjourney, ChatGPT, Suno AI, CapCut) सम्बन्धी जुनसुकै सहयोग गर्न तयार छु! 😊`;
     }
 
     // Code / Activation Key / Invalid Key
     if (q.includes('code') || q.includes('activation') || q.includes('की') || q.includes('कोड') || q.includes('invalid') || q.includes('अमान्य') || q.includes('key')) {
       return `🔑 <strong>Course Activation Code सम्बन्धी जानकारी:</strong><br/><br/>
-      • <strong>कोड कसरी पाइन्छ?</strong> भुक्तानी (eSewa ID: 9763323268) गरिसकेपछि स्क्रीनसट WhatsApp मा पठाउनासाथ तपाईंलाई गोप्य Activation Code उपलब्ध गराइन्छ।<br/>
+      • <strong>कोड कसरी पाइन्छ?</strong> भुक्तानी (eSewa ID: ${paymentConfig.esewaId || '9763323268'}) गरिसकेपछि स्क्रीनसट WhatsApp (${siteSettings.supportPhone || '976-3323268'}) मा पठाउनासाथ तपाईंलाई गोप्य Activation Code उपलब्ध गराइन्छ।<br/>
       • <strong>कोड कसरी प्रयोग गर्ने?</strong> माथिल्लो मेनुमा रहेको <strong>"🔑 Activate Code"</strong> बटन थिचेर आफ्नो कोड हाल्नुहोस्।<br/>
       • <strong>Invalid / Error देखाए के गर्ने?</strong><br/>
       1. कोडका अंग्रेजी अक्षरहरू Capital Letter (ठूलो अक्षर) मा छन् कि छैनन् चेक गर्नुहोस्।<br/>
       2. कोडको अगाडि वा पछाडि अनावश्यक Space परेको छ भने हटाउनुहोस्।<br/>
       3. सुरक्षा नीति अनुसार एउटा कोड <strong>एक पटकमा १ वटा मोवाइल/डिभाइसमा मात्र</strong> चल्दछ। यदि नयाँ डिभाइसमा खोल्नुभएको छ भने पुरानो डिभाइस लगआउट हुनुपर्छ।<br/>
-      4. थप समस्या भए सिधै हाम्रो <strong>WhatsApp (976-3323268)</strong> मा म्यासेज गर्नुहोस्!`;
+      4. थप समस्या भए सिधै हाम्रो <strong>WhatsApp (${siteSettings.supportPhone || '976-3323268'})</strong> मा म्यासेज गर्नुहोस्!`;
     }
 
     // Certificate Download & Fixes
@@ -2207,7 +2193,7 @@ export default function App() {
       १. आफ्नो <strong>Course Classroom</strong> खोल्नुहोस्।<br/>
       २. कोर्षको कार्डमा रहेको <strong>"📜 Course Certificate"</strong> बटनमा क्लिक गर्नुहोस्।<br/>
       ३. आफ्नो नाम टाइप गर्नुहोस् र <strong>"Generate & Print Certificate"</strong> मा थिचेर PDF/Image डाउनलोड गर्नुहोस्।<br/>
-      • <i>नोट:</i> प्रमाण पत्रमा तपाईंको कोर्षको आधिकारीक Unique Code र <strong>"by AI Clipzone Nepal"</strong> छाप समावेस हुनेछ!`;
+      • <i>नोट:</i> प्रमाण पत्रमा तपाईंको कोर्षको आधिकारीक Unique Code र <strong>"by ${siteSettings.instituteName || 'AI Clipzone Nepal'}"</strong> छाप समावेस हुनेछ!`;
     }
 
     // AI Prompt Generator / Prompts
@@ -2222,7 +2208,7 @@ export default function App() {
     // Pricing
     if (q.includes('price') || q.includes('कति') || q.includes('मूल्य') || q.includes('paisa') || q.includes('cost') || q.includes('rs') || q.includes('rupees') || q.includes('rate')) {
       return `हाम्रा प्रिमियम कोर्षहरू र तिनको विशेष अफर मूल्यहरू यस प्रकार छन्:<br/><br/>
-      1. <strong>AI Master Class by AI Clipzone:</strong> मात्र Rs. 449 (Hindi, 30+ AI Tools)<br/>
+      1. <strong>AI Master Class by ${siteSettings.instituteName || 'AI Clipzone'}:</strong> मात्र Rs. 449 (Hindi, 30+ AI Tools)<br/>
       2. <strong>AI Video, Image & Song Creation:</strong> मात्र Rs. 350 (Nepali)<br/>
       3. <strong>AI Song Creation Course:</strong> मात्र Rs. 299 (Nepali/Hindi)<br/>
       4. <strong>AI Presentation Making Course:</strong> मात्र Rs. 199 (Nepali/Hindi, Slides Creator)<br/><br/>
@@ -2417,15 +2403,15 @@ export default function App() {
               {/* 3D Silver Logo prominently embedded on black header */}
               <div className="h-10 sm:h-12 md:h-13 flex items-center justify-center bg-black overflow-hidden group-hover:scale-105 transition-transform duration-200 shrink-0">
                 <img 
-                  src={LOGO_DATA_URL} 
-                  alt="AI CLIPZONE"
+                  src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
+                  alt={siteSettings.instituteName || "AI CLIPZONE"}
                   className="h-10 sm:h-12 md:h-13 w-auto max-w-[130px] sm:max-w-[170px] md:max-w-[200px] object-contain shrink-0"
                   referrerPolicy="no-referrer"
                   loading="eager"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    if (target.src !== REMOTE_LOGO_URL) {
-                      target.src = REMOTE_LOGO_URL;
+                    if (target.src !== REMOTE_LOGO_URL && target.src !== LOGO_DATA_URL) {
+                      target.src = LOGO_DATA_URL;
                     }
                   }}
                 />
@@ -2434,10 +2420,10 @@ export default function App() {
               {/* Directly after logo: Prominent bold white text with Nepal flag spanning across the header */}
               <div className="flex flex-col text-left justify-center">
                 <h1 className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-black tracking-wide sm:tracking-wider text-white font-sans flex items-center gap-1.5 leading-none uppercase drop-shadow-sm whitespace-nowrap">
-                  TOP AI COURSE NEPAL 🇳🇵
+                  {siteSettings.siteTitle || (siteSettings.instituteName ? `${siteSettings.instituteName.toUpperCase()} 🇳🇵` : 'TOP AI COURSE NEPAL 🇳🇵')}
                 </h1>
                 <span className="hidden sm:block text-[9px] sm:text-[10px] md:text-xs text-zinc-400 font-semibold tracking-widest uppercase mt-1">
-                  Nepal's #1 AI Video Editing & Learning Platform
+                  {siteSettings.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform"}
                 </span>
               </div>
 
@@ -3532,7 +3518,7 @@ export default function App() {
                   <strong className="text-slate-900 font-extrabold text-lg group-hover:text-blue-700 transition-colors">
                     Facebook Page
                   </strong>
-                  <span className="text-slate-500 block text-xs mt-1">AI Clipzone Nepal</span>
+                  <span className="text-slate-500 block text-xs mt-1">{siteSettings.instituteName || "AI Clipzone Nepal"}</span>
                   <span className="text-xs text-blue-600 font-extrabold mt-1 inline-block">
                     Follow us for news & coupon codes
                   </span>
@@ -3541,7 +3527,7 @@ export default function App() {
 
               {/* Email Card */}
               <a 
-                href="mailto:ai.clipzone.edu@gmail.com" 
+                href={`mailto:${siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com'}`} 
                 className="group p-6 rounded-2xl border-2 border-rose-500/10 hover:border-rose-500 bg-rose-50/10 hover:bg-rose-50/40 transition duration-300 flex items-start gap-4"
               >
                 <div className="w-12 h-12 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0">
@@ -3551,7 +3537,7 @@ export default function App() {
                   <strong className="text-slate-900 font-extrabold text-lg group-hover:text-rose-700 transition-colors">
                     Email Support
                   </strong>
-                  <span className="text-slate-500 block text-xs mt-1">ai.clipzone.edu@gmail.com</span>
+                  <span className="text-slate-500 block text-xs mt-1">{siteSettings.supportEmail || "ai.clipzone.edu@gmail.com"}</span>
                   <span className="text-xs text-rose-600 font-extrabold mt-1 inline-block">
                     Official queries & feedback
                   </span>
@@ -3668,19 +3654,27 @@ export default function App() {
       <footer className="bg-slate-900 text-slate-400 text-xs md:text-sm py-12 border-t border-slate-800 w-full mt-auto">
         <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
-            <h5 className="text-white font-extrabold text-base tracking-tight mb-2">
-              AI Clipzone <span className="text-amber-400">Nepal</span> 🇳🇵
+            <h5 className="text-white font-extrabold text-base tracking-tight mb-2 flex items-center gap-2 justify-center md:justify-start">
+              {siteSettings.instituteLogoUrl && (
+                <img 
+                  src={siteSettings.instituteLogoUrl} 
+                  alt={siteSettings.instituteName || "Logo"} 
+                  className="h-6 w-auto object-contain rounded"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
+              <span>{siteSettings.instituteName || 'AI Clipzone Nepal'} 🇳🇵</span>
             </h5>
             <p className="text-slate-500 text-xs">
-              © {new Date().getFullYear()} AI Clipzone. All rights reserved. Nepal's Premium AI Learning platform.
+              © {new Date().getFullYear()} {siteSettings.instituteName || 'AI Clipzone'}. All rights reserved. Nepal's Premium AI Learning platform.
             </p>
           </div>
           <div className="flex gap-4">
-            <a href="https://wa.me/9779763323268" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">WhatsApp</a>
+            <a href={`https://wa.me/977${(siteSettings.supportPhone || '9763323268').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">WhatsApp</a>
             <span>•</span>
             <a href="https://www.facebook.com/profile.php?id=61583901232576&mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Facebook</a>
             <span>•</span>
-            <a href="mailto:ai.clipzone.edu@gmail.com" className="hover:text-rose-400 transition-colors">Email</a>
+            <a href={`mailto:${siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com'}`} className="hover:text-rose-400 transition-colors">Email</a>
           </div>
         </div>
       </footer>
@@ -4138,7 +4132,7 @@ export default function App() {
                 /* CASE: UNREGISTERED / NOT LOGGED IN STUDENT - DIRECT CODE LOGIN */
                 <div className="text-left mt-2">
                   <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                    Welcome to AI Clipzone Nepal 🇳🇵
+                    Welcome to {siteSettings.instituteName || 'AI Clipzone Nepal'} 🇳🇵
                   </h3>
                   <p className="text-xs text-slate-500 mt-1.5 font-semibold leading-relaxed">
                     भिडियो कोर्सहरू अनलक गर्न र अध्ययन सुरु गर्न एडमिनबाट प्राप्त Secret Activation Code (कोर्स कोड) यहाँ राख्नुहोस्:
@@ -4379,9 +4373,7 @@ export default function App() {
 
                                   <button
                                     onClick={() => {
-                                      if (window.confirm(`Are you sure you want to log out from "${course.title}" on this device? This will release the activation key for other devices.`)) {
-                                        handleReleaseCourseCode(course.id);
-                                      }
+                                      handleReleaseCourseCode(course.id);
                                     }}
                                     className="text-[9px] font-black uppercase text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition cursor-pointer shrink-0"
                                     title="Release key to use on another device"
@@ -4706,18 +4698,10 @@ export default function App() {
         courses={courses}
         allActivationKeys={allActivationKeys}
         isAdminLoadingKeys={isAdminLoadingKeys}
-        adminSearchKeyQuery={adminSearchKeyQuery}
-        setAdminSearchKeyQuery={setAdminSearchKeyQuery}
-        genStudentName={genStudentName}
-        setGenStudentName={setGenStudentName}
-        genSelectedCourseId={genSelectedCourseId}
-        setGenSelectedCourseId={setGenSelectedCourseId}
-        genSelectedDuration={genSelectedDuration}
-        setGenSelectedDuration={setGenSelectedDuration}
-        onGenerateActivationKey={handleGenerateActivationKey}
-        onDeleteActivationKey={handleDeleteActivationKey}
+        onGenerateKey={handleGenerateActivationKey}
+        onDeleteKey={handleDeleteActivationKey}
         onRefreshKeys={fetchAdminKeys}
-        onLogoutAllDevices={() => {
+        onOpenLogoutConfirm={() => {
           setLogoutSecretCodeInput('');
           setShowLogoutConfirmModal(true);
         }}
@@ -4727,10 +4711,9 @@ export default function App() {
         onSaveFaqs={handleSaveFaqs}
         siteSettings={siteSettings}
         onSaveSiteSettings={handleSaveSiteSettings}
-        onAddNewCourse={() => {
-          setShowAdminDashboard(false);
-          handleCreateCourseClick();
-        }}
+        onCreateCourseClick={handleCreateCourseClick}
+        onEditCourseClick={handleEditCourseClick}
+        onDeleteCourseClick={handleDeleteCourse}
         showToast={showToast}
       />
 
@@ -5172,13 +5155,22 @@ export default function App() {
               {/* Top Header Bar */}
               <div className="bg-gradient-to-r from-purple-800 via-indigo-900 to-slate-900 text-white p-4 flex items-center justify-between border-b border-purple-800/50">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 relative">
-                    <Bot className="w-5 h-5 text-amber-300" />
+                  <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 relative overflow-hidden">
+                    {siteSettings.instituteLogoUrl ? (
+                      <img 
+                        src={siteSettings.instituteLogoUrl} 
+                        alt="Bot" 
+                        className="w-7 h-7 object-contain rounded"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <Bot className="w-5 h-5 text-amber-300" />
+                    )}
                     <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-purple-900 animate-pulse"></span>
                   </div>
                   <div>
                     <h4 className="font-extrabold text-xs md:text-sm tracking-tight text-white flex items-center gap-1.5">
-                      AI Clipzone Assistant
+                      {siteSettings.instituteName || 'AI Clipzone'} Assistant
                       <span className="bg-amber-400/20 text-amber-300 text-[9px] px-1.5 py-0.2 rounded-full font-black border border-amber-400/30">PRO AI</span>
                     </h4>
                     <span className="text-[10px] text-purple-200 block font-medium">
@@ -5436,9 +5428,9 @@ export default function App() {
                 <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-bold bg-slate-900 text-slate-300 px-3 py-1.5 rounded-xl">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>AI Clipzone Assistant</span>
+                    <span>{siteSettings.instituteName || 'AI Clipzone'} Assistant</span>
                   </div>
-                  <span className="text-amber-400 text-[9px] uppercase tracking-wider font-black">AI Clipzone Nepal 🇳🇵</span>
+                  <span className="text-amber-400 text-[9px] uppercase tracking-wider font-black">{siteSettings.instituteName || 'AI Clipzone Nepal'} 🇳🇵</span>
                 </div>
 
               </div>
@@ -5600,7 +5592,7 @@ export default function App() {
 
             {/* Audio watermark / security controls info */}
             <div className="absolute bottom-4 right-4 text-[9px] text-slate-500 font-mono select-none pointer-events-none">
-              IP Security Monitored • AI Clipzone Nepal
+              IP Security Monitored • {siteSettings.instituteName || 'AI Clipzone Nepal'}
             </div>
           </div>
 
@@ -5665,8 +5657,21 @@ export default function App() {
           courseTitle={certificateCourseTitle}
           issueDate={certificateIssueDate || '2083/01/14'}
           certificateId={certificateCode}
+          instituteName={siteSettings.instituteName}
+          certificateInstituteName={siteSettings.certificateInstituteName}
+          logoUrl={siteSettings.certificateLogoUrl || siteSettings.instituteLogoUrl}
+          certificateTitle={siteSettings.certificateTitle}
+          certificateSubtitle={siteSettings.certificateSubtitle}
+          certificateDescription={siteSettings.certificateDescription}
           directorName={siteSettings.certificateDirectorName}
+          directorTitle={siteSettings.certificateDirectorTitle}
+          directorSignatureUrl={siteSettings.certificateDirectorSignatureUrl}
           ceoName={siteSettings.certificateCeoName}
+          ceoTitle={siteSettings.certificateCeoTitle}
+          ceoSignatureUrl={siteSettings.certificateCeoSignatureUrl}
+          certificateTheme={siteSettings.certificateTheme}
+          certificateStampUrl={siteSettings.certificateStampUrl}
+          certificateSealText={siteSettings.certificateSealText}
           onClose={() => setShowCertificateModal(false)}
         />
       )}
@@ -5683,10 +5688,16 @@ export default function App() {
             {isInstallingPwa ? (
               <div className="py-4 text-center space-y-4">
                 <div className="w-20 h-14 rounded-2xl bg-black border border-zinc-700 p-1 mx-auto flex items-center justify-center shadow-lg animate-bounce overflow-hidden">
-                  <img src={LOGO_DATA_URL} alt="Ai Clipzone" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                  <img 
+                    src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
+                    alt={siteSettings.instituteName || "App Logo"} 
+                    className="w-full h-full object-contain" 
+                    referrerPolicy="no-referrer" 
+                    onError={(e) => { e.currentTarget.src = LOGO_DATA_URL; }}
+                  />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-white">Installing Ai Clipzone...</h4>
+                  <h4 className="text-lg font-semibold text-white">Installing {siteSettings.instituteName || 'App'}...</h4>
                   <p className="text-xs text-amber-400 font-medium mt-1">
                     होम स्क्रिनमा थपिँदैछ, कृपया १ सेकेन्ड पर्खनुहोस्...
                   </p>
@@ -5705,11 +5716,17 @@ export default function App() {
                 {/* App Info Row */}
                 <div className="flex items-center gap-4 my-2">
                   <div className="w-16 h-12 rounded-xl bg-black border border-zinc-700 p-1 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
-                    <img src={LOGO_DATA_URL} alt="Ai Clipzone" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                    <img 
+                      src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
+                      alt={siteSettings.instituteName || "App Logo"} 
+                      className="w-full h-full object-contain" 
+                      referrerPolicy="no-referrer" 
+                      onError={(e) => { e.currentTarget.src = LOGO_DATA_URL; }}
+                    />
                   </div>
                   <div className="min-w-0 text-left">
                     <h4 className="text-lg font-medium text-white truncate tracking-normal">
-                      Ai Clipzone
+                      {siteSettings.instituteName || 'AI Clipzone'}
                     </h4>
                     <p className="text-sm text-slate-400 truncate font-normal mt-0.5">
                       {typeof window !== 'undefined' ? window.location.hostname || 'aiclipzone.netlify.app' : 'aiclipzone.netlify.app'}

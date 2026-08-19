@@ -23,7 +23,9 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 
 import { Course, FAQItem, PaymentQrConfig, SiteSettingsConfig } from '../types';
@@ -54,7 +56,7 @@ interface AdminDashboardModalProps {
   onEditCourseClick: (course: Course) => void;
   onDeleteCourseClick: (courseId: string) => Promise<void>;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
-  initialTab?: 'keys' | 'qr' | 'faqs' | 'overall' | 'courses';
+  initialTab?: 'keys' | 'qr' | 'faqs' | 'overall' | 'certificate' | 'courses';
 }
 
 export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
@@ -79,7 +81,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   showToast,
   initialTab = 'keys'
 }) => {
-  const [activeTab, setActiveTab] = useState<'keys' | 'qr' | 'faqs' | 'overall' | 'courses'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'keys' | 'qr' | 'faqs' | 'overall' | 'certificate' | 'courses'>(initialTab);
 
   // When initialTab changes, update activeTab
   useEffect(() => {
@@ -118,17 +120,34 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const [newAnswer, setNewAnswer] = useState('');
   const [isSavingFaqs, setIsSavingFaqs] = useState(false);
 
-  // Overall Settings Tab states
+  // Overall Settings & Institute Branding states
   const [siteTitle, setSiteTitle] = useState(siteSettings.siteTitle || 'TOP AI COURSE NEPAL 🇳🇵');
   const [siteTagline, setSiteTagline] = useState(siteSettings.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform");
+  const [instituteName, setInstituteName] = useState(siteSettings.instituteName || 'AI CLIPZONE NEPAL');
+  const [instituteLogoUrl, setInstituteLogoUrl] = useState(siteSettings.instituteLogoUrl || '');
   const [noticeBannerText, setNoticeBannerText] = useState(
     siteSettings.noticeBannerText || '🎉 New AI Tools & YouTube Blueprint Masterclasses Live! 50% Early Bird Discount.'
   );
   const [showNoticeBanner, setShowNoticeBanner] = useState(siteSettings.showNoticeBanner !== false);
   const [supportPhone, setSupportPhone] = useState(siteSettings.supportPhone || '9763323268');
   const [supportEmail, setSupportEmail] = useState(siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com');
+
+  // Certificate Designer states
+  const [certificateTitle, setCertificateTitle] = useState(siteSettings.certificateTitle || 'CERTIFICATE');
+  const [certificateSubtitle, setCertificateSubtitle] = useState(siteSettings.certificateSubtitle || 'OF ACHIEVEMENT');
+  const [certificateInstituteName, setCertificateInstituteName] = useState(siteSettings.certificateInstituteName || 'AI CLIPZONE NEPAL');
+  const [certificateLogoUrl, setCertificateLogoUrl] = useState(siteSettings.certificateLogoUrl || '');
+  const [certificateDescription, setCertificateDescription] = useState(siteSettings.certificateDescription || '');
   const [certificateDirectorName, setCertificateDirectorName] = useState(siteSettings.certificateDirectorName || 'Director');
+  const [certificateDirectorTitle, setCertificateDirectorTitle] = useState(siteSettings.certificateDirectorTitle || 'Program Director');
+  const [certificateDirectorSignatureUrl, setCertificateDirectorSignatureUrl] = useState(siteSettings.certificateDirectorSignatureUrl || '');
   const [certificateCeoName, setCertificateCeoName] = useState(siteSettings.certificateCeoName || 'Founder/CEO (AI Clipzone)');
+  const [certificateCeoTitle, setCertificateCeoTitle] = useState(siteSettings.certificateCeoTitle || 'Founder & CEO');
+  const [certificateCeoSignatureUrl, setCertificateCeoSignatureUrl] = useState(siteSettings.certificateCeoSignatureUrl || '');
+  const [certificateTheme, setCertificateTheme] = useState<'gold' | 'cyber-purple' | 'emerald' | 'crimson'>(siteSettings.certificateTheme || 'gold');
+  const [certificateStampUrl, setCertificateStampUrl] = useState(siteSettings.certificateStampUrl || '');
+  const [certificateSealText, setCertificateSealText] = useState(siteSettings.certificateSealText || 'OFFICIAL VERIFIED CERTIFICATE • AI CLIPZONE NEPAL');
+
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
 
   // Sync state when props change
@@ -152,14 +171,28 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   useEffect(() => {
     setSiteTitle(siteSettings.siteTitle || 'TOP AI COURSE NEPAL 🇳🇵');
     setSiteTagline(siteSettings.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform");
+    setInstituteName(siteSettings.instituteName || 'AI CLIPZONE NEPAL');
+    setInstituteLogoUrl(siteSettings.instituteLogoUrl || '');
     setNoticeBannerText(
       siteSettings.noticeBannerText || '🎉 New AI Tools & YouTube Blueprint Masterclasses Live! 50% Early Bird Discount.'
     );
     setShowNoticeBanner(siteSettings.showNoticeBanner !== false);
     setSupportPhone(siteSettings.supportPhone || '9763323268');
     setSupportEmail(siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com');
+    setCertificateTitle(siteSettings.certificateTitle || 'CERTIFICATE');
+    setCertificateSubtitle(siteSettings.certificateSubtitle || 'OF ACHIEVEMENT');
+    setCertificateInstituteName(siteSettings.certificateInstituteName || 'AI CLIPZONE NEPAL');
+    setCertificateLogoUrl(siteSettings.certificateLogoUrl || '');
+    setCertificateDescription(siteSettings.certificateDescription || '');
     setCertificateDirectorName(siteSettings.certificateDirectorName || 'Director');
+    setCertificateDirectorTitle(siteSettings.certificateDirectorTitle || 'Program Director');
+    setCertificateDirectorSignatureUrl(siteSettings.certificateDirectorSignatureUrl || '');
     setCertificateCeoName(siteSettings.certificateCeoName || 'Founder/CEO (AI Clipzone)');
+    setCertificateCeoTitle(siteSettings.certificateCeoTitle || 'Founder & CEO');
+    setCertificateCeoSignatureUrl(siteSettings.certificateCeoSignatureUrl || '');
+    setCertificateTheme(siteSettings.certificateTheme || 'gold');
+    setCertificateStampUrl(siteSettings.certificateStampUrl || '');
+    setCertificateSealText(siteSettings.certificateSealText || 'OFFICIAL VERIFIED CERTIFICATE • AI CLIPZONE NEPAL');
   }, [siteSettings]);
 
   // Render QR Canvas Preview dynamically in the QR Settings Tab
@@ -267,13 +300,12 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   };
 
   const handleDeleteFaq = (index: number) => {
-    if (!window.confirm('Are you sure you want to delete this FAQ question?')) return;
     const updated = localFaqs.filter((_, idx) => idx !== index);
     setLocalFaqs(updated);
     if (editingFaqIndex === index) {
       setEditingFaqIndex(null);
     }
-    showToast('FAQ deleted. Remember to Save changes to Cloud.', 'info');
+    showToast('FAQ deleted. Click "Save FAQs to Cloud" to publish changes.', 'info');
   };
 
   const handleMoveFaq = (index: number, direction: 'up' | 'down') => {
@@ -293,7 +325,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     showToast('Reset FAQs to default. Click Save to publish.', 'info');
   };
 
-  // Handle Save Overall Site Settings
+  // Handle Save Overall Site Settings & Branding
   const handleSaveOverallSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSiteSettings(true);
@@ -301,16 +333,30 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
       const updatedSettings: SiteSettingsConfig = {
         siteTitle: siteTitle.trim(),
         siteTagline: siteTagline.trim(),
+        instituteName: instituteName.trim(),
+        instituteLogoUrl: instituteLogoUrl.trim(),
         noticeBannerText: noticeBannerText.trim(),
         showNoticeBanner,
         supportPhone: supportPhone.trim(),
         supportEmail: supportEmail.trim(),
+        certificateTitle: certificateTitle.trim(),
+        certificateSubtitle: certificateSubtitle.trim(),
+        certificateInstituteName: certificateInstituteName.trim(),
+        certificateLogoUrl: certificateLogoUrl.trim(),
+        certificateDescription: certificateDescription.trim(),
         certificateDirectorName: certificateDirectorName.trim(),
+        certificateDirectorTitle: certificateDirectorTitle.trim(),
+        certificateDirectorSignatureUrl: certificateDirectorSignatureUrl.trim(),
         certificateCeoName: certificateCeoName.trim(),
+        certificateCeoTitle: certificateCeoTitle.trim(),
+        certificateCeoSignatureUrl: certificateCeoSignatureUrl.trim(),
+        certificateTheme,
+        certificateStampUrl: certificateStampUrl.trim(),
+        certificateSealText: certificateSealText.trim(),
         updatedAt: Date.now()
       };
       await onSaveSiteSettings(updatedSettings);
-      showToast('Overall site branding & settings updated live! ⚙️', 'success');
+      showToast('Branding, Certificate Design & Site settings updated live! ⚙️', 'success');
     } catch (err) {
       console.error('Error saving overall site settings:', err);
       showToast('Failed to save site settings.', 'error');
@@ -319,22 +365,31 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     }
   };
 
-  // Handle Local Image Upload for QR Code
-  const handleQrImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Generic Image File Uploader to Data URL
+  const handleImageFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (url: string) => void,
+    label: string
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      showToast('Image size exceeds 2MB limit. Please upload a smaller image.', 'error');
+      showToast('Image size exceeds 2MB limit. Please choose a smaller file.', 'error');
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setQrImageUrl(reader.result);
-        showToast('Custom QR image loaded into preview! Click Save to apply.', 'success');
+        setter(reader.result);
+        showToast(`${label} loaded! Click Save to apply changes.`, 'success');
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  // Handle Local Image Upload for QR Code
+  const handleQrImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleImageFileUpload(e, setQrImageUrl, 'Payment QR image');
   };
 
   return (
@@ -433,7 +488,19 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             }`}
           >
             <Settings className="w-3.5 h-3.5" />
-            ⚙️ Overall Site Settings
+            🏛️ Institute Branding & Site
+          </button>
+
+          <button
+            onClick={() => setActiveTab('certificate')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'certificate'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            📜 Certificate Designer & Signatures
           </button>
 
           <button
@@ -1100,20 +1167,95 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 4: OVERALL SITE & BRANDING SETTINGS */}
+          {/* TAB 4: INSTITUTE BRANDING & OVERALL SITE SETTINGS */}
           {/* ========================================================================= */}
           {activeTab === 'overall' && (
             <form onSubmit={handleSaveOverallSettings} className="space-y-6">
               <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 text-xs text-purple-950 font-semibold leading-relaxed flex items-start gap-3">
-                <span className="text-base select-none">⚙️</span>
+                <span className="text-base select-none">🏛️</span>
                 <div>
-                  <strong className="font-black text-purple-900">Overall Website & Global Branding Settings</strong>
+                  <strong className="font-black text-purple-900">Institute Branding & Global Website Settings</strong>
                   <p className="mt-0.5 text-purple-800">
-                    यहाँबाट सम्पूर्ण वेबसाइटको मुख्य शीर्षक (Headline), सबटाइटल, Notice Announcement Banner, सपोर्ट ईमेल/फोन, र Certificate मा छापिने Director र CEO को नाम परिवर्तन गर्न सक्नुहुन्छ।
+                    यहाँबाट सम्पूर्ण वेबसाइट र प्लेटफर्मभरिको Institute को नाम (AI Clipzone Institute Name), Institute Logo URL, ब्यानर शीर्षक (Headline), सबटाइटल, Notice Announcement Banner, र सपोर्ट सम्पर्क विवरणहरू प्रत्यक्ष रूपमा फेर्न सक्नुहुन्छ।
                   </p>
                 </div>
               </div>
 
+              {/* Institute Core Identity Card */}
+              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4">
+                <h4 className="text-xs font-black uppercase text-purple-900 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  Institute Identity & Official Logo
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Institute / Platform Name *
+                    </label>
+                    <input 
+                      type="text"
+                      required
+                      value={instituteName}
+                      onChange={(e) => setInstituteName(e.target.value)}
+                      placeholder="उदा: AI CLIPZONE NEPAL"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      यो नाम सम्पूर्ण साइट हेडर, फुटर, लगइन, र सर्टिफिकेटहरूमा देखा पर्नेछ।
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Institute Official Logo (Direct Image URL or Upload)
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="url"
+                        value={instituteLogoUrl}
+                        onChange={(e) => setInstituteLogoUrl(e.target.value)}
+                        placeholder="https://example.com/institute-logo.png"
+                        className="grow bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-mono text-slate-800"
+                      />
+                      <label className="shrink-0 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 cursor-pointer transition">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Upload</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageFileUpload(e, setInstituteLogoUrl, 'Institute Logo')}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Logo Preview */}
+                    {instituteLogoUrl && (
+                      <div className="mt-2.5 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200">
+                        <img 
+                          src={instituteLogoUrl} 
+                          alt="Institute Logo Preview" 
+                          className="w-10 h-10 object-contain rounded-lg bg-slate-50 p-1 border border-slate-100"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                        <div className="text-[11px] overflow-hidden">
+                          <span className="font-bold text-slate-700 block truncate">Logo Preview Loaded</span>
+                          <button 
+                            type="button" 
+                            onClick={() => setInstituteLogoUrl('')}
+                            className="text-[10px] text-red-500 hover:underline font-bold"
+                          >
+                            Remove Logo
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Website Text & Banners */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
@@ -1194,32 +1336,59 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
-                    Certificate Director Authority Name
-                  </label>
-                  <input 
-                    type="text"
-                    value={certificateDirectorName}
-                    onChange={(e) => setCertificateDirectorName(e.target.value)}
-                    placeholder="उदा: Director"
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
-                  />
+              {/* Live Header & Branding Preview Box */}
+              <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-purple-500/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Live Website Header & Brand Preview
+                  </span>
+                  <span className="text-[9px] bg-purple-950 text-purple-300 font-mono px-2 py-0.5 rounded border border-purple-800">
+                    Real-time
+                  </span>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
-                    Certificate Founder/CEO Authority Name
-                  </label>
-                  <input 
-                    type="text"
-                    value={certificateCeoName}
-                    onChange={(e) => setCertificateCeoName(e.target.value)}
-                    placeholder="उदा: Founder/CEO (AI Clipzone)"
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
-                  />
+                <div className="bg-slate-950/80 p-3 sm:p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 text-left w-full sm:w-auto">
+                    {instituteLogoUrl ? (
+                      <img 
+                        src={instituteLogoUrl} 
+                        alt="Logo Preview" 
+                        className="w-12 h-12 object-contain rounded-xl bg-black border border-purple-500/40 p-1 shrink-0 shadow-md"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-purple-900/60 border border-purple-500/40 flex items-center justify-center shrink-0">
+                        <GraduationCap className="w-6 h-6 text-amber-400" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm sm:text-base font-black tracking-tight text-white flex items-center gap-2">
+                        <span>{instituteName || 'AI CLIPZONE NEPAL'}</span>
+                        <span className="text-amber-400 text-xs">🇳🇵</span>
+                      </div>
+                      <p className="text-[10px] text-purple-200 font-medium truncate max-w-xs">
+                        {siteTagline || "Nepal's #1 AI Video Editing & Learning Platform"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="w-full sm:w-auto text-right">
+                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block font-mono">
+                      {siteTitle || 'TOP AI COURSE NEPAL'}
+                    </span>
+                    <span className="text-[9px] text-slate-400">
+                      {supportEmail} • {supportPhone}
+                    </span>
+                  </div>
                 </div>
+
+                {showNoticeBanner && noticeBannerText && (
+                  <div className="bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold text-center tracking-tight truncate">
+                    {noticeBannerText}
+                  </div>
+                )}
               </div>
 
               {/* Save Button */}
@@ -1230,24 +1399,541 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                   className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  {isSavingSiteSettings ? 'Saving to Firebase...' : '💾 Save Overall Site Settings'}
+                  {isSavingSiteSettings ? 'Saving to Firebase...' : '💾 Save Institute & Site Settings'}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
+                    setInstituteName(DEFAULT_SITE_SETTINGS.instituteName || 'AI CLIPZONE NEPAL');
+                    setInstituteLogoUrl(DEFAULT_SITE_SETTINGS.instituteLogoUrl || '');
                     setSiteTitle(DEFAULT_SITE_SETTINGS.siteTitle || 'TOP AI COURSE NEPAL 🇳🇵');
                     setSiteTagline(DEFAULT_SITE_SETTINGS.siteTagline || "Nepal's #1 AI Video Editing & Learning Platform");
                     setNoticeBannerText(DEFAULT_SITE_SETTINGS.noticeBannerText || '');
                     setShowNoticeBanner(true);
                     setSupportPhone(DEFAULT_SITE_SETTINGS.supportPhone || '9763323268');
                     setSupportEmail(DEFAULT_SITE_SETTINGS.supportEmail || 'ai.clipzone.edu@gmail.com');
-                    setCertificateDirectorName(DEFAULT_SITE_SETTINGS.certificateDirectorName || 'Director');
-                    setCertificateCeoName(DEFAULT_SITE_SETTINGS.certificateCeoName || 'Founder/CEO (AI Clipzone)');
                     showToast('Reset site settings form to default values. Click Save to apply.', 'info');
                   }}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl text-xs transition cursor-pointer"
                 >
                   Reset Defaults
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 5: CERTIFICATE DESIGNER & SIGNATURES */}
+          {/* ========================================================================= */}
+          {activeTab === 'certificate' && (
+            <form onSubmit={handleSaveOverallSettings} className="space-y-6">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 font-semibold leading-relaxed flex items-start gap-3">
+                <span className="text-base select-none">📜</span>
+                <div>
+                  <strong className="font-black text-amber-900">Certificate Designer & Signatures Authority Management</strong>
+                  <p className="mt-0.5 text-amber-800">
+                    यहाँबाट सम्पूर्ण कोर्सहरूको Certificate of Completion को ढाँचा, Title, Institute Logo, थीम रङ्ग (Gold, Cyber Purple, Emerald, Crimson), Director र CEO को नाम, पदवी तथा डिजिटल Signature Image (URL/Upload), र Official Stamp पूर्ण रूपमा व्यवस्थापन गर्न सकिन्छ।
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Realtime Certificate Mockup Preview */}
+              <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-amber-400/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Interactive Live Certificate Preview
+                  </span>
+                  <span className="text-[9px] bg-amber-950 text-amber-300 font-mono px-2 py-0.5 rounded border border-amber-800">
+                    Theme: {certificateTheme.toUpperCase()}
+                  </span>
+                </div>
+
+                {/* Scaled-down realistic certificate render */}
+                <div className={`p-5 rounded-xl border-4 transition-all text-center relative overflow-hidden ${
+                  certificateTheme === 'gold' 
+                    ? 'bg-amber-50/95 text-slate-900 border-amber-500 shadow-amber-900/40' 
+                    : certificateTheme === 'cyber-purple'
+                    ? 'bg-purple-50/95 text-slate-900 border-purple-600 shadow-purple-900/40'
+                    : certificateTheme === 'emerald'
+                    ? 'bg-emerald-50/95 text-slate-900 border-emerald-600 shadow-emerald-900/40'
+                    : 'bg-rose-50/95 text-slate-900 border-rose-600 shadow-rose-900/40'
+                }`}>
+                  {/* Watermark Logo */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                    <GraduationCap className="w-64 h-64 text-slate-900" />
+                  </div>
+
+                  <div className="flex justify-between items-center px-4 mb-2">
+                    {certificateLogoUrl || instituteLogoUrl ? (
+                      <img 
+                        src={certificateLogoUrl || instituteLogoUrl} 
+                        alt="Logo" 
+                        className="h-9 object-contain rounded"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="font-black text-xs uppercase tracking-widest text-slate-800">
+                        {certificateInstituteName || 'AI CLIPZONE'}
+                      </div>
+                    )}
+                    <span className="text-[9px] font-mono font-black text-slate-500 tracking-wider">
+                      CERT-PREVIEW-2026
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-serif font-black tracking-widest uppercase text-slate-900 mt-1">
+                    {certificateTitle || 'CERTIFICATE'}
+                  </h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                    {certificateSubtitle || 'OF ACHIEVEMENT'}
+                  </p>
+
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-2 font-bold">
+                    This is proudly presented to
+                  </p>
+                  <h4 className="text-lg sm:text-xl font-serif font-black text-purple-900 italic my-1">
+                    Student Full Name
+                  </h4>
+                  <p className="text-[10px] text-slate-600 max-w-md mx-auto font-medium leading-relaxed">
+                    {certificateDescription || 'has successfully completed all modules and practical requirements of the course with outstanding performance.'}
+                  </p>
+
+                  {/* Signatories & Seal in Certificate Preview */}
+                  <div className="mt-4 pt-3 border-t border-slate-300/80 flex items-center justify-between px-2 sm:px-6">
+                    {/* Left Authority */}
+                    <div className="text-center w-28 sm:w-36">
+                      <div className="h-8 flex items-center justify-center">
+                        {certificateDirectorSignatureUrl ? (
+                          <img 
+                            src={certificateDirectorSignatureUrl} 
+                            alt="Director Signature" 
+                            className="h-7 object-contain mx-auto"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <span className="font-serif italic text-sm text-slate-700 font-bold">
+                            {certificateDirectorName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="border-t border-slate-400 mt-1 pt-0.5">
+                        <strong className="text-[10px] font-black text-slate-800 block leading-tight">
+                          {certificateDirectorName}
+                        </strong>
+                        <span className="text-[8px] text-slate-500 block leading-tight font-medium">
+                          {certificateDirectorTitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Seal */}
+                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-amber-600 flex flex-col items-center justify-center p-1 bg-amber-100/50 shadow-inner">
+                      <ShieldCheck className="w-4 h-4 text-amber-700" />
+                      <span className="text-[6px] font-black text-amber-900 uppercase">SEAL</span>
+                    </div>
+
+                    {/* Right Authority */}
+                    <div className="text-center w-28 sm:w-36">
+                      <div className="h-8 flex items-center justify-center">
+                        {certificateCeoSignatureUrl ? (
+                          <img 
+                            src={certificateCeoSignatureUrl} 
+                            alt="CEO Signature" 
+                            className="h-7 object-contain mx-auto"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <span className="font-serif italic text-sm text-slate-700 font-bold">
+                            {certificateCeoName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="border-t border-slate-400 mt-1 pt-0.5">
+                        <strong className="text-[10px] font-black text-slate-800 block leading-tight">
+                          {certificateCeoName}
+                        </strong>
+                        <span className="text-[8px] text-slate-500 block leading-tight font-medium">
+                          {certificateCeoTitle}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Certificate Theme Selection */}
+              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-3">
+                <label className="block text-[10px] font-black uppercase text-slate-600">
+                  🎨 Certificate Visual Theme
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'gold', name: 'Royal Gold', border: 'border-amber-400', bg: 'bg-amber-50', badge: 'bg-amber-500' },
+                    { id: 'cyber-purple', name: 'Cyber Purple', border: 'border-purple-400', bg: 'bg-purple-50', badge: 'bg-purple-600' },
+                    { id: 'emerald', name: 'Emerald Green', border: 'border-emerald-400', bg: 'bg-emerald-50', badge: 'bg-emerald-600' },
+                    { id: 'crimson', name: 'Crimson Red', border: 'border-rose-400', bg: 'bg-rose-50', badge: 'bg-rose-600' }
+                  ].map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setCertificateTheme(theme.id as any)}
+                      className={`p-3 rounded-xl border-2 text-left transition flex flex-col gap-1.5 cursor-pointer ${
+                        certificateTheme === theme.id
+                          ? `${theme.border} ${theme.bg} shadow-sm ring-2 ring-purple-400`
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`w-3.5 h-3.5 rounded-full ${theme.badge}`} />
+                        {certificateTheme === theme.id && (
+                          <span className="text-[10px] font-black text-purple-700">ACTIVE</span>
+                        )}
+                      </div>
+                      <span className="text-xs font-black text-slate-800">{theme.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Certificate Text & Titles */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Certificate Main Heading *
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={certificateTitle}
+                    onChange={(e) => setCertificateTitle(e.target.value)}
+                    placeholder="CERTIFICATE"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800 tracking-wider"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Certificate Sub-Heading *
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={certificateSubtitle}
+                    onChange={(e) => setCertificateSubtitle(e.target.value)}
+                    placeholder="OF ACHIEVEMENT"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800 tracking-wider"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Institute Name on Certificate *
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={certificateInstituteName}
+                    onChange={(e) => setCertificateInstituteName(e.target.value)}
+                    placeholder="AI CLIPZONE NEPAL"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] font-black uppercase text-slate-500">
+                      Certificate Logo URL
+                    </label>
+                    {instituteLogoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setCertificateLogoUrl(instituteLogoUrl)}
+                        className="text-[10px] text-purple-700 hover:underline font-bold"
+                      >
+                        ⚡ Use Institute Logo
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      type="url"
+                      value={certificateLogoUrl}
+                      onChange={(e) => setCertificateLogoUrl(e.target.value)}
+                      placeholder="https://example.com/certificate-logo.png"
+                      className="grow bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-mono text-slate-800"
+                    />
+                    <label className="shrink-0 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 cursor-pointer transition">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Upload</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => handleImageFileUpload(e, setCertificateLogoUrl, 'Certificate Logo')}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Custom Certificate Body Text (Leave empty to use automatic course description)
+                  </label>
+                  <textarea 
+                    rows={2}
+                    value={certificateDescription}
+                    onChange={(e) => setCertificateDescription(e.target.value)}
+                    placeholder="has successfully completed all modules, practical assignments, and verified requirements of the course..."
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Signatures Authority Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
+                {/* Director Authority */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-black text-slate-800 uppercase flex items-center gap-1.5">
+                      ✍️ Left Signatory (Director)
+                    </h5>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                      Authority Name *
+                    </label>
+                    <input 
+                      type="text"
+                      value={certificateDirectorName}
+                      onChange={(e) => setCertificateDirectorName(e.target.value)}
+                      placeholder="उदा: Director"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-bold text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                      Authority Title / Designation
+                    </label>
+                    <input 
+                      type="text"
+                      value={certificateDirectorTitle}
+                      onChange={(e) => setCertificateDirectorTitle(e.target.value)}
+                      placeholder="Program Director / Academic Head"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-semibold text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                      Director Digital Signature (URL or Upload Image)
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="url"
+                        value={certificateDirectorSignatureUrl}
+                        onChange={(e) => setCertificateDirectorSignatureUrl(e.target.value)}
+                        placeholder="https://example.com/director-signature.png"
+                        className="grow bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-mono text-slate-800"
+                      />
+                      <label className="shrink-0 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1 cursor-pointer transition">
+                        <Upload className="w-3.5 h-3.5" />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageFileUpload(e, setCertificateDirectorSignatureUrl, 'Director Signature')}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Signature Preview */}
+                    {certificateDirectorSignatureUrl ? (
+                      <div className="mt-2 bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <img 
+                          src={certificateDirectorSignatureUrl} 
+                          alt="Director Signature" 
+                          className="h-9 object-contain max-w-[120px]"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setCertificateDirectorSignatureUrl('')}
+                          className="text-[10px] text-red-500 hover:underline font-bold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1 italic">
+                        * यदि signature image खाली राखियो भने सुरुवाती stylised digital script प्रयोग हुनेछ।
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Founder/CEO Authority */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-black text-slate-800 uppercase flex items-center gap-1.5">
+                      ✍️ Right Signatory (Founder & CEO)
+                    </h5>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                      Authority Name *
+                    </label>
+                    <input 
+                      type="text"
+                      value={certificateCeoName}
+                      onChange={(e) => setCertificateCeoName(e.target.value)}
+                      placeholder="उदा: Founder/CEO (AI Clipzone)"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-bold text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                      Authority Title / Designation
+                    </label>
+                    <input 
+                      type="text"
+                      value={certificateCeoTitle}
+                      onChange={(e) => setCertificateCeoTitle(e.target.value)}
+                      placeholder="Founder & CEO (AI Clipzone)"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-semibold text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                      CEO Digital Signature (URL or Upload Image)
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="url"
+                        value={certificateCeoSignatureUrl}
+                        onChange={(e) => setCertificateCeoSignatureUrl(e.target.value)}
+                        placeholder="https://example.com/ceo-signature.png"
+                        className="grow bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-xs transition outline-hidden font-mono text-slate-800"
+                      />
+                      <label className="shrink-0 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1 cursor-pointer transition">
+                        <Upload className="w-3.5 h-3.5" />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageFileUpload(e, setCertificateCeoSignatureUrl, 'CEO Signature')}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Signature Preview */}
+                    {certificateCeoSignatureUrl ? (
+                      <div className="mt-2 bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <img 
+                          src={certificateCeoSignatureUrl} 
+                          alt="CEO Signature" 
+                          className="h-9 object-contain max-w-[120px]"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setCertificateCeoSignatureUrl('')}
+                          className="text-[10px] text-red-500 hover:underline font-bold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1 italic">
+                        * यदि signature image खाली राखियो भने सुरुवाती stylised digital script प्रयोग हुनेछ।
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Official Seal / Stamp Details */}
+              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4">
+                <h4 className="text-xs font-black uppercase text-purple-900 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-purple-600" />
+                  Official Stamp & Security Seal Text
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Certificate Stamp Image URL (Optional)
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="url"
+                        value={certificateStampUrl}
+                        onChange={(e) => setCertificateStampUrl(e.target.value)}
+                        placeholder="https://example.com/official-stamp.png"
+                        className="grow bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-mono text-slate-800"
+                      />
+                      <label className="shrink-0 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 cursor-pointer transition">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Upload</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageFileUpload(e, setCertificateStampUrl, 'Official Stamp')}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                      Seal Perimeter Verification Text
+                    </label>
+                    <input 
+                      type="text"
+                      value={certificateSealText}
+                      onChange={(e) => setCertificateSealText(e.target.value)}
+                      placeholder="OFFICIAL VERIFIED CERTIFICATE • AI CLIPZONE NEPAL"
+                      className="w-full bg-white border border-slate-200 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800 text-[11px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Certificate Design Button */}
+              <div className="pt-3 border-t border-slate-100 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isSavingSiteSettings}
+                  className="bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSavingSiteSettings ? 'Saving Design to Firebase...' : '💾 Save Certificate Design & Signatures'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCertificateTitle(DEFAULT_SITE_SETTINGS.certificateTitle || 'CERTIFICATE');
+                    setCertificateSubtitle(DEFAULT_SITE_SETTINGS.certificateSubtitle || 'OF ACHIEVEMENT');
+                    setCertificateInstituteName(DEFAULT_SITE_SETTINGS.certificateInstituteName || 'AI CLIPZONE NEPAL');
+                    setCertificateLogoUrl(DEFAULT_SITE_SETTINGS.certificateLogoUrl || '');
+                    setCertificateDescription(DEFAULT_SITE_SETTINGS.certificateDescription || '');
+                    setCertificateDirectorName(DEFAULT_SITE_SETTINGS.certificateDirectorName || 'Director');
+                    setCertificateDirectorTitle(DEFAULT_SITE_SETTINGS.certificateDirectorTitle || 'Program Director');
+                    setCertificateDirectorSignatureUrl(DEFAULT_SITE_SETTINGS.certificateDirectorSignatureUrl || '');
+                    setCertificateCeoName(DEFAULT_SITE_SETTINGS.certificateCeoName || 'Founder/CEO (AI Clipzone)');
+                    setCertificateCeoTitle(DEFAULT_SITE_SETTINGS.certificateCeoTitle || 'Founder & CEO');
+                    setCertificateCeoSignatureUrl(DEFAULT_SITE_SETTINGS.certificateCeoSignatureUrl || '');
+                    setCertificateTheme(DEFAULT_SITE_SETTINGS.certificateTheme || 'gold');
+                    setCertificateStampUrl(DEFAULT_SITE_SETTINGS.certificateStampUrl || '');
+                    setCertificateSealText(DEFAULT_SITE_SETTINGS.certificateSealText || 'OFFICIAL VERIFIED CERTIFICATE • AI CLIPZONE NEPAL');
+                    showToast('Reset certificate design parameters to defaults. Click Save to apply.', 'info');
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Reset Certificate Defaults
                 </button>
               </div>
             </form>
