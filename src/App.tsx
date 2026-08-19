@@ -61,6 +61,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndP
 import { db, auth } from './firebase';
 import { CertificateModal } from './components/CertificateModal';
 import { AdminDashboardModal } from './components/AdminDashboardModal';
+import { OpeningSplashScreen } from './components/OpeningSplashScreen';
 import { LOGO_DATA_URL, REMOTE_LOGO_URL } from './logo';
 
 enum OperationType {
@@ -140,6 +141,9 @@ function getSecureYouTubeEmbedUrl(url: string, autoplay: boolean = false): strin
 }
 
 export default function App() {
+  // App Opening Splash screen state
+  const [showOpeningSplash, setShowOpeningSplash] = useState(true);
+
   // Admin Mode states
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
@@ -2346,6 +2350,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-premium-mesh bg-slate-50/90 text-slate-800 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden flex flex-col justify-between relative">
+      {/* Dynamic App Opening Splash Screen with High-Res AI Clipzone Logo */}
+      {showOpeningSplash && (
+        <OpeningSplashScreen
+          logoUrl={siteSettings.instituteLogoUrl}
+          siteTitle={siteSettings.siteTitle || (siteSettings.instituteName ? `${siteSettings.instituteName.toUpperCase()} 🇳🇵` : 'TOP AI COURSE NEPAL 🇳🇵')}
+          siteTagline={siteSettings.siteTagline}
+          onFinish={() => setShowOpeningSplash(false)}
+        />
+      )}
       
       {/* Subtle Luxury Ambient Background Light Orbs & Grid Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
