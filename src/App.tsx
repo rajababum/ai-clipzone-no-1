@@ -1740,7 +1740,8 @@ export default function App() {
       const isStandalone = 
         window.matchMedia('(display-mode: standalone)').matches ||
         (window.navigator as any).standalone === true ||
-        document.referrer.includes('android-app://');
+        document.referrer.includes('android-app://') ||
+        localStorage.getItem('clipzone_pwa_installed') === 'true';
 
       if (isStandalone) {
         setIsAppInstalled(true);
@@ -1754,8 +1755,12 @@ export default function App() {
 
     const handleAppInstalled = () => {
       setIsAppInstalled(true);
+      localStorage.setItem('clipzone_pwa_installed', 'true');
       setDeferredPrompt(null);
-      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone Nepal'} App Successfully Installed!`, 'success');
+      setShowPwaInstallModal(false);
+      setIsInstallingPwa(false);
+      triggerInstallNotification();
+      showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -1766,6 +1771,34 @@ export default function App() {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
+
+  const triggerInstallNotification = () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 150]);
+      }
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App Installed!`, {
+            body: 'तपाईंको मोबाइलमा एप सफलतापूर्वक इन्स्टल भयो। अब जुनसुकै बेला अफलाइन पनि प्रयोग गर्न सक्नुहुन्छ!',
+            icon: '/logo.png',
+            badge: '/logo.png',
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then((perm) => {
+            if (perm === 'granted') {
+              new Notification(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App Installed!`, {
+                body: 'तपाईंको मोबाइलमा एप सफलतापूर्वक इन्स्टल भयो!',
+                icon: '/logo.png',
+              });
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.log('Notification trigger skipped:', e);
+    }
+  };
 
   const handleInstallPwa = async () => {
     if (isAppInstalled) {
@@ -1778,14 +1811,23 @@ export default function App() {
   const handleConfirmInstallModal = async () => {
     setIsInstallingPwa(true);
 
+    // Request notification permission during user interaction if available
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        Notification.requestPermission().catch(() => {});
+      } catch (e) {}
+    }
+
     if (deferredPrompt) {
       try {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
           setIsAppInstalled(true);
+          localStorage.setItem('clipzone_pwa_installed', 'true');
           setShowPwaInstallModal(false);
           setIsInstallingPwa(false);
+          triggerInstallNotification();
           showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
           setDeferredPrompt(null);
           return;
@@ -1811,7 +1853,9 @@ export default function App() {
       setIsInstallingPwa(false);
       setShowPwaInstallModal(false);
       setIsAppInstalled(true);
-      showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
+      localStorage.setItem('clipzone_pwa_installed', 'true');
+      triggerInstallNotification();
+      showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो! (App Installed!)`, 'success');
     }, 1200);
   };
 
