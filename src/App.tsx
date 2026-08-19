@@ -1718,19 +1718,16 @@ export default function App() {
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // PWA Installation & App Mode State
+  // Standalone Native App Mode detection (True only when running inside installed mobile app)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isAppInstalled, setIsAppInstalled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return (
-      localStorage.getItem('clipzone_is_app_mode') === 'true' ||
       window.matchMedia('(display-mode: standalone)').matches ||
       window.matchMedia('(display-mode: fullscreen)').matches ||
       window.matchMedia('(display-mode: minimal-ui)').matches ||
       (window.navigator as any).standalone === true ||
-      document.referrer.includes('android-app://') ||
-      window.location.search.includes('mode=app') ||
-      window.location.search.includes('source=pwa')
+      document.referrer.includes('android-app://')
     );
   });
   const [showPwaInstallModal, setShowPwaInstallModal] = useState<boolean>(false);
@@ -1746,18 +1743,13 @@ export default function App() {
 
       const checkStandalone = () => {
         const isStandalone = 
-          localStorage.getItem('clipzone_is_app_mode') === 'true' ||
           window.matchMedia('(display-mode: standalone)').matches ||
           window.matchMedia('(display-mode: fullscreen)').matches ||
           window.matchMedia('(display-mode: minimal-ui)').matches ||
           (window.navigator as any).standalone === true ||
-          document.referrer.includes('android-app://') ||
-          window.location.search.includes('mode=app') ||
-          window.location.search.includes('source=pwa');
+          document.referrer.includes('android-app://');
 
-        if (isStandalone) {
-          setIsAppInstalled(true);
-        }
+        setIsAppInstalled(isStandalone);
       };
 
       checkStandalone();
@@ -1775,12 +1767,8 @@ export default function App() {
     };
 
     const handleAppInstalled = () => {
-      try {
-        localStorage.setItem('clipzone_is_app_mode', 'true');
-      } catch (e) {}
-      setIsAppInstalled(true);
       setDeferredPrompt(null);
-      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App Successfully Installed!`, 'success');
+      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App मोबाइलमा इन्स्टल भयो! कृपया होम स्क्रिनबाट एप खोल्नुहोस्।`, 'success');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -1794,7 +1782,7 @@ export default function App() {
 
   const handleInstallPwa = async () => {
     if (isAppInstalled) {
-      showToast(`✅ ${siteSettings.instituteName || 'AI Clipzone'} App पहिले नै इन्स्टल भइसकेको छ!`, 'success');
+      showToast(`✅ तपाईं पहिले नै ${siteSettings.instituteName || 'AI Clipzone'} App भित्र हुनुहुन्छ!`, 'info');
       return;
     }
     if (deferredPrompt) {
@@ -1802,14 +1790,10 @@ export default function App() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          try {
-            localStorage.setItem('clipzone_is_app_mode', 'true');
-          } catch (e) {}
-          setIsAppInstalled(true);
-          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
-          setShowPwaInstallModal(false);
+          showToast(`🎉 App मोबाइलमा इन्स्टल हुँदैछ! इन्स्टल भएपछि Home Screen बाट खोल्नुहोस्।`, 'success');
         }
         setDeferredPrompt(null);
+        setShowPwaInstallModal(false);
         return;
       } catch (err) {
         console.warn('Install prompt error:', err);
@@ -1824,30 +1808,29 @@ export default function App() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
-          try {
-            localStorage.setItem('clipzone_is_app_mode', 'true');
-          } catch (e) {}
-          setIsAppInstalled(true);
-          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
-          setShowPwaInstallModal(false);
-          setDeferredPrompt(null);
-          return;
+          showToast(`🎉 App मोबाइलमा इन्स्टल हुँदैछ! इन्स्टल भएपछि होम स्क्रिनबाट एप खोल्नुहोस्।`, 'success');
         }
         setDeferredPrompt(null);
+        setShowPwaInstallModal(false);
+        return;
       } catch (e) {
         console.warn('Install prompt error:', e);
       }
     }
 
+    const isInIframe = typeof window !== 'undefined' && window.top !== window.self;
+    if (isInIframe) {
+      window.open(window.location.href, '_blank');
+      showToast('📲 नयाँ विन्डोमा खुल्यो! त्यहाँबाट Install गर्नुहोस्।', 'info');
+      setShowPwaInstallModal(false);
+      return;
+    }
+
     setIsInstallingPwa(true);
     setTimeout(() => {
-      try {
-        localStorage.setItem('clipzone_is_app_mode', 'true');
-      } catch (e) {}
       setIsInstallingPwa(false);
       setShowPwaInstallModal(false);
-      setIsAppInstalled(true);
-      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
+      showToast(`📲 App डाउनलोड/इन्स्टल हुँदैछ! इन्स्टल भएपछि कृपया मोवाइलको Home Screen बाट एप खोल्नुहोस्।`, 'success');
     }, 1000);
   };
 
@@ -5735,7 +5718,7 @@ export default function App() {
         />
       )}
 
-      {/* PWA INSTALLATION NATIVE DIALOG */}
+      {/* PWA INSTALLATION NATIVE DIALOG MATCHING USER SCREENSHOT */}
       {showPwaInstallModal && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[5000] flex items-center justify-center p-4">
           <motion.div

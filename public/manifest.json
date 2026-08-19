@@ -1,9 +1,9 @@
 {
   "id": "/",
-  "short_name": "AI Clipzone",
+  "short_name": "Ai Clipzone",
   "name": "AI Clipzone Nepal",
   "description": "Nepal's #1 AI Learning Platform - Master AI Video Creation, Prompt Engineering & Digital Skills.",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui", "window-controls-overlay"],
@@ -13,18 +13,6 @@
   "prefer_related_applications": false,
   "categories": ["education", "productivity", "utilities"],
   "icons": [
-    {
-      "src": "/logo.png",
-      "type": "image/png",
-      "sizes": "192x192 512x512",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo.png",
-      "type": "image/png",
-      "sizes": "192x192 512x512",
-      "purpose": "maskable"
-    },
     {
       "src": "/pwa-icon.svg",
       "type": "image/svg+xml",
@@ -40,7 +28,7 @@
     {
       "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
       "type": "image/png",
-      "sizes": "512x512",
+      "sizes": "192x192 512x512 1074x1074",
       "purpose": "any maskable"
     }
   ],
