@@ -479,9 +479,6 @@ export default function App() {
 
   // Check active device sessions to enforce single device login
   const checkActiveDeviceSessions = async () => {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return;
-    }
     const deviceId = getOrCreateDeviceId();
     try {
       const activeCodesStr = localStorage.getItem('clipzone_active_codes');
@@ -497,7 +494,7 @@ export default function App() {
 
       for (const code of activeCodes) {
         try {
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 2000));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 1500));
           const keyDocSnap: any = await Promise.race([
             getDoc(doc(db, 'activation_keys', code)),
             timeoutPromise
@@ -547,7 +544,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      // Graceful offline fallback
+      console.error('Error checking active device sessions:', err);
     }
   };
 
@@ -590,7 +587,7 @@ export default function App() {
     checkActiveDeviceSessions();
     const interval = setInterval(() => {
       checkActiveDeviceSessions();
-    }, 30000);
+    }, 12000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
@@ -1740,8 +1737,7 @@ export default function App() {
       const isStandalone = 
         window.matchMedia('(display-mode: standalone)').matches ||
         (window.navigator as any).standalone === true ||
-        document.referrer.includes('android-app://') ||
-        localStorage.getItem('clipzone_pwa_installed') === 'true';
+        document.referrer.includes('android-app://');
 
       if (isStandalone) {
         setIsAppInstalled(true);
@@ -1755,12 +1751,8 @@ export default function App() {
 
     const handleAppInstalled = () => {
       setIsAppInstalled(true);
-      localStorage.setItem('clipzone_pwa_installed', 'true');
       setDeferredPrompt(null);
-      setShowPwaInstallModal(false);
-      setIsInstallingPwa(false);
-      triggerInstallNotification();
-      showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
+      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone Nepal'} App Successfully Installed!`, 'success');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -1772,84 +1764,38 @@ export default function App() {
     };
   }, []);
 
-  const triggerInstallNotification = () => {
-    try {
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([100, 50, 100, 50, 150]);
-      }
-      if (typeof window !== 'undefined' && 'Notification' in window) {
-        if (Notification.permission === 'granted') {
-          new Notification(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App Installed!`, {
-            body: 'तपाईंको मोबाइलमा एप सफलतापूर्वक इन्स्टल भयो। अब जुनसुकै बेला अफलाइन पनि प्रयोग गर्न सक्नुहुन्छ!',
-            icon: '/logo.png',
-            badge: '/logo.png',
-          });
-        } else if (Notification.permission !== 'denied') {
-          Notification.requestPermission().then((perm) => {
-            if (perm === 'granted') {
-              new Notification(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App Installed!`, {
-                body: 'तपाईंको मोबाइलमा एप सफलतापूर्वक इन्स्टल भयो!',
-                icon: '/logo.png',
-              });
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.log('Notification trigger skipped:', e);
-    }
-  };
-
   const handleInstallPwa = async () => {
     if (isAppInstalled) {
-      showToast(`✅ ${siteSettings.instituteName || 'Ai Clipzone'} App पहिले नै इन्स्टल भइसकेको छ! (App is already installed)`, 'success');
+      showToast(`✅ ${siteSettings.instituteName || 'AI Clipzone'} App पहिले नै इन्स्टल भइसकेको छ! (App is already installed)`, 'success');
       return;
     }
-
     if (deferredPrompt) {
       try {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
+          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो! (App Installed!)`, 'success');
           setIsAppInstalled(true);
-          localStorage.setItem('clipzone_pwa_installed', 'true');
           setShowPwaInstallModal(false);
-          setIsInstallingPwa(false);
-          triggerInstallNotification();
-          showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
-          setDeferredPrompt(null);
-          return;
         }
         setDeferredPrompt(null);
+        return;
       } catch (err) {
-        console.warn('Direct install prompt error:', err);
+        console.warn('Install prompt error:', err);
       }
     }
-
     setShowPwaInstallModal(true);
   };
 
   const handleConfirmInstallModal = async () => {
-    setIsInstallingPwa(true);
-
-    // Request notification permission during user interaction if available
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      try {
-        Notification.requestPermission().catch(() => {});
-      } catch (e) {}
-    }
-
     if (deferredPrompt) {
       try {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult?.outcome === 'accepted') {
+          showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
           setIsAppInstalled(true);
-          localStorage.setItem('clipzone_pwa_installed', 'true');
           setShowPwaInstallModal(false);
-          setIsInstallingPwa(false);
-          triggerInstallNotification();
-          showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
           setDeferredPrompt(null);
           return;
         }
@@ -1861,23 +1807,19 @@ export default function App() {
 
     const isInIframe = typeof window !== 'undefined' && window.top !== window.self;
     if (isInIframe) {
-      setTimeout(() => {
-        setIsInstallingPwa(false);
-        setShowPwaInstallModal(false);
-        window.open(window.location.href, '_blank');
-        showToast('📲 Full Screen मा खुल्यो! तुरुन्त App Install गर्नुहोस्!', 'info');
-      }, 700);
+      window.open(window.location.href, '_blank');
+      showToast('📲 Full Screen मा खुल्यो! तुरुन्त App Install गर्नुहोस्!', 'info');
+      setShowPwaInstallModal(false);
       return;
     }
 
+    setIsInstallingPwa(true);
     setTimeout(() => {
       setIsInstallingPwa(false);
       setShowPwaInstallModal(false);
       setIsAppInstalled(true);
-      localStorage.setItem('clipzone_pwa_installed', 'true');
-      triggerInstallNotification();
-      showToast(`🎉 ${siteSettings.instituteName || 'Ai Clipzone'} App सफलतापूर्वक इन्स्टल भयो! (App Installed!)`, 'success');
-    }, 1200);
+      showToast(`🎉 ${siteSettings.instituteName || 'AI Clipzone'} App सफलतापूर्वक इन्स्टल भयो!`, 'success');
+    }, 1000);
   };
 
   // Toast helper
@@ -5764,80 +5706,75 @@ export default function App() {
         />
       )}
 
-      {/* PWA INSTALLATION NATIVE DIALOG (Pixel-perfect matching user screenshot) */}
+      {/* PWA INSTALLATION NATIVE DIALOG MATCHING USER SCREENSHOT */}
       {showPwaInstallModal && (
-        <div 
-          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[5000] flex items-center justify-center p-4"
-          onClick={() => setShowPwaInstallModal(false)}
-        >
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[5000] flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 15 }}
+            initial={{ opacity: 0, scale: 0.92, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 15 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-[#262628] text-white rounded-[28px] max-w-sm sm:max-w-md w-full p-6 sm:p-7 shadow-2xl border border-zinc-700/40 relative font-sans overflow-hidden select-none"
+            exit={{ opacity: 0, scale: 0.92, y: 15 }}
+            className="bg-[#28292c] text-white rounded-[28px] max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-700/50 relative font-sans overflow-hidden"
           >
             {isInstallingPwa ? (
-              <div className="py-6 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-black border border-zinc-700 p-1 mx-auto flex items-center justify-center shadow-lg animate-pulse overflow-hidden">
+              <div className="py-4 text-center space-y-4">
+                <div className="w-20 h-14 rounded-2xl bg-black border border-zinc-700 p-1 mx-auto flex items-center justify-center shadow-lg animate-bounce overflow-hidden">
                   <img 
                     src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
-                    alt={siteSettings.instituteName || "Ai Clipzone"} 
-                    className="w-full h-full object-contain rounded-full" 
+                    alt={siteSettings.instituteName || "App Logo"} 
+                    className="w-full h-full object-contain" 
                     referrerPolicy="no-referrer" 
                     onError={(e) => { e.currentTarget.src = LOGO_DATA_URL; }}
                   />
                 </div>
                 <div>
-                  <h4 className="text-xl font-normal text-white">Installing {siteSettings.instituteName || 'Ai Clipzone'}...</h4>
-                  <p className="text-sm text-zinc-400 mt-1 font-normal">
-                    एप इन्स्टल गरिँदैछ, कृपया एकछिन पर्खनुहोस्...
+                  <h4 className="text-lg font-semibold text-white">Installing {siteSettings.instituteName || 'App'}...</h4>
+                  <p className="text-xs text-amber-400 font-medium mt-1">
+                    एप इन्स्टल गरिँदैछ, कृपया १ सेकेन्ड पर्खनुहोस्...
                   </p>
                 </div>
-                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden relative mt-4">
-                  <div className="bg-[#a8c7fa] h-full w-full animate-pulse rounded-full"></div>
+                <div className="w-full bg-slate-700/80 h-2.5 rounded-full overflow-hidden relative mt-3">
+                  <div className="bg-gradient-to-r from-amber-400 to-amber-500 h-full w-full animate-pulse rounded-full"></div>
                 </div>
               </div>
             ) : (
               <>
                 {/* Title */}
-                <h3 className="text-2xl font-normal text-zinc-100 text-left mb-6">
+                <h3 className="text-xl font-medium text-slate-100 mb-6 text-left tracking-tight">
                   Install app
                 </h3>
 
                 {/* App Info Row */}
-                <div className="flex items-center gap-4 my-3 text-left">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black border border-zinc-700/80 p-0.5 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
+                <div className="flex items-center gap-4 my-2">
+                  <div className="w-16 h-12 rounded-xl bg-black border border-zinc-700 p-1 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
                     <img 
                       src={siteSettings.instituteLogoUrl && siteSettings.instituteLogoUrl.trim() ? siteSettings.instituteLogoUrl.trim() : LOGO_DATA_URL} 
-                      alt={siteSettings.instituteName || "Ai Clipzone"} 
-                      className="w-full h-full object-contain rounded-full" 
+                      alt={siteSettings.instituteName || "App Logo"} 
+                      className="w-full h-full object-contain" 
                       referrerPolicy="no-referrer" 
                       onError={(e) => { e.currentTarget.src = LOGO_DATA_URL; }}
                     />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-2xl font-normal text-white truncate tracking-normal">
-                      {siteSettings.instituteName || 'Ai Clipzone'}
+                  <div className="min-w-0 text-left">
+                    <h4 className="text-lg font-medium text-white truncate tracking-normal">
+                      {siteSettings.instituteName || 'AI Clipzone'}
                     </h4>
-                    <p className="text-sm sm:text-base text-zinc-400 font-normal truncate mt-0.5">
-                      {typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? 'aiclipzone.vercel.app' : window.location.hostname.replace(/^www\./, '')) : 'aiclipzone.vercel.app'}
+                    <p className="text-sm text-slate-400 truncate font-normal mt-0.5">
+                      {typeof window !== 'undefined' ? window.location.hostname || 'aiclipzone.netlify.app' : 'aiclipzone.netlify.app'}
                     </p>
                   </div>
                 </div>
 
-                {/* Action Buttons: Cancel and Install */}
+                {/* Action Buttons */}
                 <div className="flex items-center justify-end gap-3 mt-8 pt-2">
                   <button
                     onClick={() => setShowPwaInstallModal(false)}
-                    className="px-5 py-2 rounded-full text-base font-medium text-[#a8c7fa] hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                    className="text-[#a8c7fa] hover:bg-white/10 text-sm font-medium px-5 py-2.5 rounded-full transition cursor-pointer active:bg-white/20"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleConfirmInstallModal}
-                    className="px-5 py-2 rounded-full text-base font-medium text-[#a8c7fa] hover:text-white hover:bg-[#a8c7fa]/10 transition-colors cursor-pointer"
+                    className="text-[#a8c7fa] hover:bg-white/10 text-sm font-semibold px-5 py-2.5 rounded-full transition cursor-pointer active:bg-white/20"
                   >
                     Install
                   </button>

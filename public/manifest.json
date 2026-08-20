@@ -1,65 +1,35 @@
 {
-  "id": "/?source=pwa",
+  "id": "/",
   "short_name": "Ai Clipzone",
-  "name": "Ai Clipzone",
+  "name": "AI Clipzone Nepal",
   "description": "Nepal's #1 AI Learning Platform - Master AI Video Creation, Prompt Engineering & Digital Skills.",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui", "window-controls-overlay"],
   "orientation": "portrait-primary",
   "background_color": "#09090b",
   "theme_color": "#09090b",
-  "lang": "en",
-  "dir": "ltr",
   "prefer_related_applications": false,
   "categories": ["education", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
+      "src": "/pwa-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "180x180",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
       "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-maskable-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/logo.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "AI Clipzone Courses & Classroom"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "AI Clipzone Nepal Dashboard"
+      "sizes": "192x192 512x512 1074x1074",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -67,15 +37,15 @@
       "name": "Home",
       "short_name": "Home",
       "description": "Browse AI Courses",
-      "url": "/?source=pwa",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/",
+      "icons": [{ "src": "/pwa-icon.svg", "sizes": "192x192" }]
     },
     {
       "name": "Classroom",
       "short_name": "Classroom",
       "description": "Access Enrolled Courses & Lectures",
-      "url": "/?tab=classroom&source=pwa",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/?tab=classroom",
+      "icons": [{ "src": "/pwa-icon.svg", "sizes": "192x192" }]
     }
   ]
 }
