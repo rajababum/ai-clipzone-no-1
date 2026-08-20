@@ -80,17 +80,7 @@
   font-family: var(--font-heading);
 }
 
-/* Native Mobile App Touch & UI Enhancements */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Mobile view clear visibility & native app styling */
+/* Mobile view clear visibility & slight zoom-out styling (thorai zoom out for mobile) */
 @media (max-width: 640px) {
   html {
     font-size: 93.5%;
@@ -99,19 +89,6 @@ html, body {
   body {
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-}
-
-/* Standalone Native App Mode Optimizations */
-@media all and (display-mode: standalone) {
-  body {
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  input, textarea, [contenteditable="true"] {
-    user-select: text;
-    -webkit-user-select: text;
   }
 }
 

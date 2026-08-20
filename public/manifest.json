@@ -1,16 +1,14 @@
 {
-  "id": "/",
   "short_name": "Ai Clipzone",
-  "name": "AI Clipzone Nepal",
+  "name": "Ai Clipzone",
   "description": "Nepal's #1 AI Learning Platform - Master AI Video Creation, Prompt Engineering & Digital Skills.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen", "minimal-ui", "window-controls-overlay"],
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
-  "prefer_related_applications": false,
+  "background_color": "#202124",
+  "theme_color": "#202124",
   "categories": ["education", "productivity", "utilities"],
   "icons": [
     {
@@ -24,12 +22,6 @@
       "type": "image/svg+xml",
       "sizes": "180x180",
       "purpose": "any"
-    },
-    {
-      "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7aJwyICAKblH7QvXyJ2rlMp69h1WQKLqUZscgVpXPB5rtceSU6qTJ3toQOJO4ZLJbpJd0OSSAGDCz0ehv0E3lZIXFvGOwq2OE4hQ0lxkEYw5awj68gqPYi4KX5_OkIB0zKWRwKlp7RKX8WBO1Elw5iJ21XCWjp65lemWCZPCCiyYI8vnoLpZ0m-zLPBwl/s1074/IMG_20260817_134049_273.png",
-      "type": "image/png",
-      "sizes": "192x192 512x512 1074x1074",
-      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
