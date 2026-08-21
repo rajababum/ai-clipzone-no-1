@@ -2,7 +2,7 @@
   "short_name": "Ai Clipzone",
   "name": "Ai Clipzone",
   "description": "Nepal's #1 AI Learning Platform - Master AI Video Creation, Prompt Engineering & Digital Skills.",
-  "start_url": "/",
+  "start_url": "/?mode=app",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui"],
@@ -29,14 +29,14 @@
       "name": "Home",
       "short_name": "Home",
       "description": "Browse AI Courses",
-      "url": "/",
+      "url": "/?mode=app",
       "icons": [{ "src": "/pwa-icon.svg", "sizes": "192x192" }]
     },
     {
       "name": "Classroom",
       "short_name": "Classroom",
       "description": "Access Enrolled Courses & Lectures",
-      "url": "/?tab=classroom",
+      "url": "/?mode=app&tab=classroom",
       "icons": [{ "src": "/pwa-icon.svg", "sizes": "192x192" }]
     }
   ]

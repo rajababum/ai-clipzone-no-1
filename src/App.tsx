@@ -1728,18 +1728,40 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState<boolean>(true);
   const [isIOS, setIsIOS] = useState<boolean>(false);
 
+  // Check if currently running inside native installed app / APK / PWA standalone mode
+  const checkIsAppMode = () => {
+    if (typeof window === 'undefined') return false;
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isStandaloneDisplay = 
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches;
+    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const isAndroidAppReferrer = typeof document !== 'undefined' && document.referrer.includes('android-app://');
+    const isUrlAppFlag = 
+      window.location.search.includes('mode=app') ||
+      window.location.search.includes('app=true') ||
+      window.location.search.includes('source=apk') ||
+      window.location.search.includes('source=pwa') ||
+      window.location.hash.includes('mode=app') ||
+      window.location.hash.includes('app=true');
+    const isAndroidWebView = ua.includes('wv') || (ua.includes('android') && ua.includes('version/'));
+    const isNativeAndroidBridge = (window as any).Android !== undefined || (window as any).ReactNativeWebView !== undefined;
+
+    return isStandaloneDisplay || isIOSStandalone || isAndroidAppReferrer || isUrlAppFlag || isAndroidWebView || isNativeAndroidBridge;
+  };
+
+  const [isRunningInAppMode, setIsRunningInAppMode] = useState<boolean>(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const userAgent = window.navigator.userAgent.toLowerCase();
       const iosDevice = /iphone|ipad|ipod/.test(userAgent);
       setIsIOS(iosDevice);
 
-      const isStandalone = 
-        window.matchMedia('(display-mode: standalone)').matches ||
-        (window.navigator as any).standalone === true ||
-        document.referrer.includes('android-app://');
-
-      if (isStandalone) {
+      const inApp = checkIsAppMode();
+      setIsRunningInAppMode(inApp);
+      if (inApp) {
         setIsAppInstalled(true);
       }
     }
@@ -2345,7 +2367,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-premium-mesh bg-slate-50/90 text-slate-800 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden flex flex-col justify-between relative">
+    <div className={`min-h-screen bg-premium-mesh bg-slate-50/90 text-slate-800 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden flex flex-col justify-between relative ${isRunningInAppMode ? 'pb-20' : ''}`}>
       {/* Subtle Luxury Ambient Background Light Orbs & Grid Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
         <div className="absolute -top-32 -left-32 w-[550px] h-[550px] bg-purple-300/25 rounded-full blur-[130px]" />
@@ -2594,40 +2616,42 @@ export default function App() {
           </div>
         </div>
 
-        {/* Mobile Tab Switcher (Seamlessly attached without gap) */}
-        <div className="sm:hidden w-full bg-black border-t border-zinc-800/80 py-2 px-4 flex gap-2">
-          <button
-            onClick={() => {
-              setCurrentView('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              showToast('Home Page! 🏠', 'info');
-            }}
-            className={`flex-1 py-2 rounded-xl text-center font-black text-xs transition flex items-center justify-center gap-1.5 ${
-              currentView === 'home'
-                ? 'bg-amber-400 text-slate-950 shadow-md font-black'
-                : 'text-zinc-400 bg-zinc-900/90 border border-zinc-800 hover:bg-zinc-800 hover:text-white'
-            }`}
-          >
-            🏠 Home
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView('classroom');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              showToast('My Classroom! 🎓', 'info');
-            }}
-            className={`flex-1 py-2 rounded-xl text-center font-black text-xs transition flex items-center justify-center gap-1.5 relative ${
-              currentView === 'classroom'
-                ? 'bg-amber-400 text-slate-950 shadow-md font-black'
-                : 'text-zinc-400 bg-zinc-900/90 border border-zinc-800 hover:bg-zinc-800 hover:text-white'
-            }`}
-          >
-            🎓 Classroom
-            {activeCourseIds.length > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            )}
-          </button>
-        </div>
+        {/* Mobile Tab Switcher on Header - shown on website browser mobile mode, hidden in App mode where bottom bar is used */}
+        {!isRunningInAppMode && (
+          <div className="sm:hidden w-full bg-black border-t border-zinc-800/80 py-2 px-4 flex gap-2">
+            <button
+              onClick={() => {
+                setCurrentView('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast('Home Page! 🏠', 'info');
+              }}
+              className={`flex-1 py-2 rounded-xl text-center font-black text-xs transition flex items-center justify-center gap-1.5 ${
+                currentView === 'home'
+                  ? 'bg-amber-400 text-slate-950 shadow-md font-black'
+                  : 'text-zinc-400 bg-zinc-900/90 border border-zinc-800 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              🏠 Home
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView('classroom');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast('My Classroom! 🎓', 'info');
+              }}
+              className={`flex-1 py-2 rounded-xl text-center font-black text-xs transition flex items-center justify-center gap-1.5 relative ${
+                currentView === 'classroom'
+                  ? 'bg-amber-400 text-slate-950 shadow-md font-black'
+                  : 'text-zinc-400 bg-zinc-900/90 border border-zinc-800 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              🎓 Classroom
+              {activeCourseIds.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Container for Course List */}
@@ -5120,8 +5144,8 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* FLOATING CHATBOT ASSISTANT */}
-      <div className="fixed bottom-6 left-6 z-[999]">
+      {/* FLOATING CHATBOT ASSISTANT - positioned cleanly on website, or secondary in desktop/tablet */}
+      <div className={`fixed z-[999] transition-all duration-300 ${isRunningInAppMode ? 'bottom-20 left-6 hidden sm:block' : 'bottom-6 left-6'}`}>
         
         {/* Floating circular button */}
         <button 
@@ -5734,8 +5758,28 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Direct APK Download Option if configured */}
+                {siteSettings.apkDownloadUrl && siteSettings.apkDownloadUrl.trim() && (
+                  <div className="mt-4 pt-3 border-t border-zinc-700/60">
+                    <a
+                      href={siteSettings.apkDownloadUrl.trim()}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        setShowPwaInstallModal(false);
+                        showToast('📥 Direct APK Downloading... Open the installed APK to experience full App mode!', 'success');
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download Android APK Direct (.apk)</span>
+                    </a>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-3 mt-8 pt-2">
+                <div className="flex items-center justify-end gap-3 mt-6 pt-2">
                   <button
                     onClick={() => setShowPwaInstallModal(false)}
                     className="text-[#a8c7fa] hover:bg-white/10 text-sm font-medium px-5 py-2.5 rounded-full transition cursor-pointer active:bg-white/20"
@@ -5753,6 +5797,104 @@ export default function App() {
             )}
           </motion.div>
         </div>
+      )}
+
+      {/* NATIVE APP BOTTOM NAVIGATION BAR - ONLY VISIBLE IN INSTALLED APK / PWA APP MODE (NEVER ON REGULAR BROWSER LINK) */}
+      {isRunningInAppMode && (
+        <nav 
+          id="native-app-bottom-bar"
+          aria-label="App Navigation Bar" 
+          className="fixed bottom-0 inset-x-0 z-[4900] bg-[#121316] border-t border-zinc-800/90 shadow-[0_-10px_35px_rgba(0,0,0,0.9)] pb-[env(safe-area-inset-bottom,0px)] select-none backdrop-blur-md"
+        >
+          <div className="max-w-md mx-auto px-1 py-1.5 flex items-center justify-around">
+            {/* 1. Home */}
+            <button
+              id="app-nav-home"
+              onClick={() => {
+                setCurrentView('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer active:scale-95 ${
+                currentView === 'home' && !isChatOpen && !showProfileModal
+                  ? 'text-amber-400 font-bold'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <Home className={`w-5 h-5 mb-0.5 ${currentView === 'home' && !isChatOpen && !showProfileModal ? 'stroke-[2.5] text-amber-400' : 'stroke-[1.8]'}`} />
+              <span className="text-[10.5px] font-semibold tracking-tight">Home</span>
+            </button>
+
+            {/* 2. Classroom */}
+            <button
+              id="app-nav-classroom"
+              onClick={() => {
+                setCurrentView('classroom');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer active:scale-95 relative ${
+                currentView === 'classroom' && !isChatOpen && !showProfileModal
+                  ? 'text-amber-400 font-bold'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <div className="relative flex items-center justify-center">
+                <BookOpen className={`w-5 h-5 mb-0.5 ${currentView === 'classroom' && !isChatOpen && !showProfileModal ? 'stroke-[2.5] text-amber-400' : 'stroke-[1.8]'}`} />
+                {/* Green Notification Dot from Screenshot */}
+                <span className="w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-[#121316] absolute -top-1 -right-1.5 animate-pulse shadow-xs" />
+              </div>
+              <span className="text-[10.5px] font-semibold tracking-tight">Classroom</span>
+            </button>
+
+            {/* 3. Certificate */}
+            <button
+              id="app-nav-certificate"
+              onClick={() => {
+                const activeCourses = courses.filter(c => activeCourseIds.includes(c.id));
+                const currentCourse = activeCourses.find(c => c.id === selectedClassroomCourseId) || activeCourses[0] || courses[0];
+                const studentName = currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Student Learner';
+                const activeCode = currentCourse ? getCourseActivationCode(currentCourse.id) : 'AICLIP-CERT-2026';
+                const cleanTitle = (currentCourse?.title || 'AI Master Course').replace(/by Dhruv Rathee/gi, 'by AI Clipzone').replace(/Dhruv Rathee/gi, 'AI Clipzone');
+                setCertificateCourseTitle(cleanTitle);
+                setCertificateStudentName(studentName);
+                setCertificateIssueDate('2083/01/14');
+                setCertificateCode(activeCode);
+                setShowCertificateModal(true);
+              }}
+              className="flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer active:scale-95 text-zinc-400 hover:text-amber-300"
+            >
+              <Award className="w-5 h-5 mb-0.5 stroke-[2.2] text-amber-400" />
+              <span className="text-[10.5px] font-semibold text-zinc-400 tracking-tight">Certificate</span>
+            </button>
+
+            {/* 4. AI Help */}
+            <button
+              id="app-nav-aihelp"
+              onClick={() => {
+                setIsChatOpen(prev => !prev);
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer active:scale-95 ${
+                isChatOpen ? 'text-purple-400 font-bold' : 'text-zinc-400 hover:text-purple-300'
+              }`}
+            >
+              <Bot className="w-5 h-5 mb-0.5 stroke-[2.2] text-purple-400" />
+              <span className="text-[10.5px] font-semibold tracking-tight">AI Help</span>
+            </button>
+
+            {/* 5. Account */}
+            <button
+              id="app-nav-account"
+              onClick={() => {
+                setShowProfileModal(true);
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer active:scale-95 ${
+                showProfileModal ? 'text-sky-400 font-bold' : 'text-zinc-400 hover:text-sky-300'
+              }`}
+            >
+              <User className="w-5 h-5 mb-0.5 stroke-[2.2] text-sky-400" />
+              <span className="text-[10.5px] font-semibold tracking-tight">Account</span>
+            </button>
+          </div>
+        </nav>
       )}
 
     </div>

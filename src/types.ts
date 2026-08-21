@@ -82,6 +82,7 @@ export interface SiteSettingsConfig {
   certificateTheme?: string;
   certificateStampUrl?: string;
   certificateSealText?: string;
+  apkDownloadUrl?: string;
   updatedAt?: number;
 }
 

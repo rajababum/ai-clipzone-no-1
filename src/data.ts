@@ -34,6 +34,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsConfig = {
   certificateTheme: "gold",
   certificateStampUrl: "",
   certificateSealText: "AI CLIPZONE • OFFICIALLY VERIFIED •",
+  apkDownloadUrl: "",
 };
 
 export const COURSES: Course[] = [

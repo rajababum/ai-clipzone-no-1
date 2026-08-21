@@ -131,6 +131,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const [showNoticeBanner, setShowNoticeBanner] = useState(siteSettings.showNoticeBanner !== false);
   const [supportPhone, setSupportPhone] = useState(siteSettings.supportPhone || '9763323268');
   const [supportEmail, setSupportEmail] = useState(siteSettings.supportEmail || 'ai.clipzone.edu@gmail.com');
+  const [apkDownloadUrl, setApkDownloadUrl] = useState(siteSettings.apkDownloadUrl || '');
 
   // Certificate Designer states
   const [certificateTitle, setCertificateTitle] = useState(siteSettings.certificateTitle || 'CERTIFICATE');
@@ -193,6 +194,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     setCertificateTheme(siteSettings.certificateTheme || 'gold');
     setCertificateStampUrl(siteSettings.certificateStampUrl || '');
     setCertificateSealText(siteSettings.certificateSealText || 'OFFICIAL VERIFIED CERTIFICATE • AI CLIPZONE NEPAL');
+    setApkDownloadUrl(siteSettings.apkDownloadUrl || '');
   }, [siteSettings]);
 
   // Render QR Canvas Preview dynamically in the QR Settings Tab
@@ -352,6 +354,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
         certificateTheme,
         certificateStampUrl: certificateStampUrl.trim(),
         certificateSealText: certificateSealText.trim(),
+        apkDownloadUrl: apkDownloadUrl.trim(),
         updatedAt: Date.now()
       };
       await onSaveSiteSettings(updatedSettings);
@@ -1334,6 +1337,22 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     placeholder="उदा: 9763323268"
                     className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1.5">
+                    Android APK File Download Direct Link (वैकल्पिक सिधै APK URL)
+                  </label>
+                  <input 
+                    type="text"
+                    value={apkDownloadUrl}
+                    onChange={(e) => setApkDownloadUrl(e.target.value)}
+                    placeholder="उदा: https://your-server.com/aiclipzone.apk (खाली भएमा PWA Instant Installer स्वतः प्रयोग हुन्छ)"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs transition outline-hidden font-bold text-slate-800"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    यदि तपाईंसँग सिधै `.apk` फाइलको Direct Download Link छ भने यहाँ राख्न सक्नुहुन्छ।
+                  </p>
                 </div>
               </div>
 
