@@ -5169,42 +5169,52 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* FLOATING CHATBOT ASSISTANT - positioned cleanly on website, or secondary in desktop/tablet */}
-      <div className={`fixed z-[999] transition-all duration-300 ${isRunningInAppMode ? 'bottom-20 left-6 hidden sm:block' : 'bottom-6 left-6'}`}>
-        
-        {/* Floating circular button */}
-        <button 
-          onClick={() => setIsChatOpen(!isChatOpen)}
-          className="w-16 h-16 bg-gradient-to-tr from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-950 text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-purple-700/20 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer relative"
-          aria-label="Toggle chat assistant"
-        >
-          {isChatOpen ? (
-            <X className="w-7 h-7" />
-          ) : (
-            <>
-              <Bot className="w-8 h-8 animate-bounce mt-1" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 text-[9px] font-black text-slate-950 items-center justify-center">1</span>
-              </span>
-            </>
-          )}
-        </button>
+      {/* FLOATING CHATBOT TRIGGER BUTTON - only visible when not in app mode or on larger screens */}
+      {!isRunningInAppMode && (
+        <div className="fixed bottom-6 left-6 z-[990]">
+          <button 
+            id="floating-ai-agent-fab"
+            onClick={() => setIsChatOpen(prev => !prev)}
+            className="w-16 h-16 bg-gradient-to-tr from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-950 text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-purple-700/20 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer relative"
+            aria-label="Toggle chat assistant"
+          >
+            {isChatOpen ? (
+              <X className="w-7 h-7" />
+            ) : (
+              <>
+                <Bot className="w-8 h-8 animate-bounce mt-1" />
+                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 text-[9px] font-black text-slate-950 items-center justify-center">1</span>
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
-        {/* Chat Window Popup */}
-        <AnimatePresence>
-          {isChatOpen && (
+      {/* CHATBOT ASSISTANT MODAL WINDOW - Supported seamlessly in both Native App Mode & Web Browser Mode */}
+      <AnimatePresence>
+        {isChatOpen && (
+          <div 
+            className="fixed inset-0 z-[5500] flex flex-col justify-end sm:justify-end sm:items-start p-0 sm:p-6 bg-black/60 backdrop-blur-xs sm:bg-transparent pointer-events-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setIsChatOpen(false);
+              }
+            }}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 50, x: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 50, x: -20 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-              className="absolute bottom-20 left-0 w-[340px] md:w-[400px] h-[540px] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col"
+              initial={{ opacity: 0, scale: 0.95, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 40 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 260 }}
+              className={`w-full sm:w-[410px] h-[85vh] sm:h-[580px] max-h-[92vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col pointer-events-auto ${isRunningInAppMode ? 'mb-16 sm:mb-0' : ''}`}
             >
               {/* Top Header Bar */}
-              <div className="bg-gradient-to-r from-purple-800 via-indigo-900 to-slate-900 text-white p-4 flex items-center justify-between border-b border-purple-800/50">
+              <div className="bg-gradient-to-r from-purple-800 via-indigo-900 to-slate-900 text-white p-3.5 sm:p-4 flex items-center justify-between border-b border-purple-800/50 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 relative overflow-hidden">
+                  <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 relative overflow-hidden shrink-0">
                     {siteSettings.instituteLogoUrl ? (
                       <img 
                         src={siteSettings.instituteLogoUrl} 
@@ -5265,12 +5275,12 @@ export default function App() {
 
               {/* Advanced Prompt Builder Mini Modal View */}
               {showPromptBuilder && (
-                <div className="bg-gradient-to-r from-purple-900 to-indigo-950 p-3 text-white border-b border-purple-700/50">
+                <div className="bg-gradient-to-r from-purple-900 to-indigo-950 p-3 text-white border-b border-purple-700/50 shrink-0">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
                       <Sparkles className="w-3.5 h-3.5" /> AI Master Prompt Builder
                     </span>
-                    <button onClick={() => setShowPromptBuilder(false)} className="text-purple-300 hover:text-white text-xs">Close</button>
+                    <button onClick={() => setShowPromptBuilder(false)} className="text-purple-300 hover:text-white text-xs cursor-pointer">Close</button>
                   </div>
                   <div className="flex gap-1.5">
                     <input
@@ -5322,7 +5332,7 @@ export default function App() {
               </div>
 
               {/* Chat messages body */}
-              <div className="grow overflow-y-auto p-4 space-y-4 bg-slate-50">
+              <div className="grow overflow-y-auto p-3.5 sm:p-4 space-y-3.5 bg-slate-50">
                 {chatMessages.map((msg, idx) => (
                   <div 
                     key={idx}
@@ -5393,7 +5403,7 @@ export default function App() {
               </div>
 
               {/* Bottom Quick reply chips & Input bar */}
-              <div className="p-3 bg-white border-t border-slate-200">
+              <div className="p-3 bg-white border-t border-slate-200 shrink-0">
                 
                 {/* Suggestions chips filtered by active category */}
                 <div className="flex flex-wrap gap-1.5 mb-2 max-h-20 overflow-y-auto">
@@ -5485,10 +5495,9 @@ export default function App() {
               </div>
 
             </motion.div>
-          )}
-        </AnimatePresence>
-
-      </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Fullscreen Immersive Video Player Overlay with Auto-Rotate & Simple 'X' Close Button */}
       {fullscreenVideo && (

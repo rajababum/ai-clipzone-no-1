@@ -39,9 +39,23 @@ async function startServer() {
         return res.status(400).json({ error: "Message is required" });
       }
 
+      // Check / lazy initialize AI client
+      const currentApiKey = process.env.GEMINI_API_KEY;
+      if (!ai && currentApiKey) {
+        ai = new GoogleGenAI({
+          apiKey: currentApiKey,
+          httpOptions: {
+            headers: {
+              'User-Agent': 'aistudio-build',
+            }
+          }
+        });
+      }
+
       if (!ai) {
-        return res.status(500).json({ 
-          error: "Gemini API Key is not configured in settings. Please configure GEMINI_API_KEY." 
+        // Safe intelligent fallback when GEMINI_API_KEY is not configured yet
+        return res.json({ 
+          reply: "नमस्ते! 🙏 AI Clipzone Nepal मा यहाँलाई स्वागत छ। हाम्रा प्रिमियम कोर्षहरू (AI Masterclass, YouTube Blueprint, AI Video & Song Creation), Activation Key, वा eSewa भुक्तानी सम्बन्धी जानकारीका लागि सिधै हाम्रो आधिकारिक WhatsApp नम्बर 976-3323268 मा सम्पर्क गर्नुहोस्।" 
         });
       }
 
