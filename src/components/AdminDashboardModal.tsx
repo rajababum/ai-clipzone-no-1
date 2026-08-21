@@ -83,6 +83,10 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'keys' | 'qr' | 'faqs' | 'overall' | 'certificate' | 'courses'>(initialTab);
 
+  // Key Deletion Confirmation state
+  const [keyToDelete, setKeyToDelete] = useState<any | null>(null);
+  const [isDeletingKey, setIsDeletingKey] = useState(false);
+
   // When initialTab changes, update activeTab
   useEffect(() => {
     if (initialTab) {
@@ -721,11 +725,12 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                           </div>
 
                           <button
-                            onClick={() => onDeleteKey(key.code || key.id)}
-                            className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition shrink-0 cursor-pointer"
-                            title="Delete license"
+                            onClick={() => setKeyToDelete(key)}
+                            className="text-slate-400 hover:text-rose-600 p-2 rounded-xl hover:bg-rose-50 transition shrink-0 cursor-pointer flex items-center gap-1 border border-transparent hover:border-rose-200"
+                            title="Permanently remove / delete user course code"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 text-rose-500" />
+                            <span className="text-[10px] font-black uppercase text-rose-600">Remove</span>
                           </button>
                         </div>
                       ))}
@@ -2054,6 +2059,95 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             Close
           </button>
         </div>
+
+        {/* Key / User Course Code Permanent Delete Confirmation Dialog */}
+        <AnimatePresence>
+          {keyToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-rose-100 text-left space-y-4"
+              >
+                <div className="flex items-center gap-3 text-rose-600">
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center border border-rose-200 shrink-0">
+                    <Trash2 className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      Permanently Remove User Course Code?
+                    </h3>
+                    <p className="text-xs text-rose-600 font-bold">
+                      यो कोड र विद्यार्थीको पहुँच स्थायी रूपमा हटाइनेछ (Cannot be undone)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">Secret Code:</span>
+                    <span className="font-mono font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                      {keyToDelete.code || keyToDelete.id}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">Student Name:</span>
+                    <span className="font-extrabold text-slate-900">
+                      {keyToDelete.studentName || keyToDelete.claimedByEmail || 'Not Assigned'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">Course:</span>
+                    <span className="font-bold text-slate-800 text-right truncate max-w-[200px]">
+                      {keyToDelete.courseTitle || 'All Courses'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">Status:</span>
+                    <span className="font-extrabold uppercase text-[10px] text-slate-700">
+                      {keyToDelete.status || 'Active'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    disabled={isDeletingKey}
+                    onClick={() => setKeyToDelete(null)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    Cancel (रद्द गर्नुहोस्)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeletingKey}
+                    onClick={async () => {
+                      try {
+                        setIsDeletingKey(true);
+                        await onDeleteKey(keyToDelete.code || keyToDelete.id);
+                        setKeyToDelete(null);
+                      } catch (e) {
+                        console.error('Delete error:', e);
+                      } finally {
+                        setIsDeletingKey(false);
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isDeletingKey ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    Confirm Permanent Delete (स्थायी हटाउनुहोस्)
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

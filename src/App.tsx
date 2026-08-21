@@ -1299,7 +1299,20 @@ export default function App() {
     // 1. Delete document from Firestore
     try {
       await deleteDoc(doc(db, 'activation_keys', code));
-      showToast(`Secret code ${code} deleted successfully.`, 'success');
+      
+      // Cleanup any secondary matching documents
+      try {
+        const qSnap = await getDocs(query(collection(db, 'activation_keys'), where('code', '==', code)));
+        for (const d of qSnap.docs) {
+          if (d.id !== code) {
+            await deleteDoc(doc(db, 'activation_keys', d.id));
+          }
+        }
+      } catch (qErr) {
+        console.warn('Additional key cleanup query:', qErr);
+      }
+
+      showToast(`Secret code ${code} permanently deleted from database.`, 'success');
     } catch (err) {
       console.error('Failed to delete key from Firestore:', err);
       showToast(`Secret code ${code} deleted locally.`, 'info');
@@ -3885,7 +3898,13 @@ export default function App() {
 
                       <button
                         onClick={() => {
-                          const studentName = currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Mr. Rajababu Mehta';
+                          const isLoggedIn = !!currentUser || !!localStorage.getItem('clipzone_student_name') || activeCourseIds.includes(selectedCourse.id);
+                          if (!isLoggedIn) {
+                            showToast('🔒 प्रमाणपत्र हेर्न कृपया पहिले यो कोर्ष Unlock / Login गर्नुहोस्!', 'info');
+                            setShowCodeInputModal(true);
+                            return;
+                          }
+                          const studentName = currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Student';
                           setCertificateCourseTitle(selectedCourse.title);
                           setCertificateStudentName(studentName);
                           setCertificateIssueDate(new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }));
@@ -4249,7 +4268,13 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => {
-                        const studentName = currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Mr. Rajababu Mehta';
+                        const isLoggedIn = !!currentUser || !!localStorage.getItem('clipzone_student_name') || activeCourseIds.length > 0;
+                        if (!isLoggedIn) {
+                          showToast('🔒 प्रमाणपत्र हेर्न कृपया आफ्नो Activation Code मार्फत पहिले लगइन गर्नुहोस्!', 'info');
+                          setShowCodeInputModal(true);
+                          return;
+                        }
+                        const studentName = currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Student';
                         const activeCourse = courses.find(c => activeCourseIds.includes(c.id)) || courses[0];
                         setCertificateCourseTitle(activeCourse ? activeCourse.title : 'AI CONTENT CREATION & DIGITAL DESIGN MASTERCLASS');
                         setCertificateStudentName(studentName);
@@ -5849,10 +5874,16 @@ export default function App() {
             <button
               id="app-nav-certificate"
               onClick={() => {
+                const isLoggedIn = !!currentUser || !!localStorage.getItem('clipzone_student_name') || activeCourseIds.length > 0;
+                if (!isLoggedIn) {
+                  showToast('🔒 प्रमाणपत्र हेर्न कृपया आफ्नो Activation Code मार्फत पहिले लगइन गर्नुहोस्! (Please sign in to view certificate)', 'info');
+                  setShowCodeInputModal(true);
+                  return;
+                }
                 const activeCourses = courses.filter(c => activeCourseIds.includes(c.id));
                 const currentCourse = activeCourses.find(c => c.id === selectedClassroomCourseId) || activeCourses[0] || courses[0];
                 const studentName = currentUser?.displayName || authName || localStorage.getItem('clipzone_student_name') || 'Student Learner';
-                const activeCode = currentCourse ? getCourseActivationCode(currentCourse.id) : 'AICLIP-CERT-2026';
+                const activeCode = currentCourse ? getCourseActivationCode(currentCourse.id) : (userActivationKeys[0]?.code || 'AICLIP-CERT-2026');
                 const cleanTitle = (currentCourse?.title || 'AI Master Course').replace(/by Dhruv Rathee/gi, 'by AI Clipzone').replace(/Dhruv Rathee/gi, 'AI Clipzone');
                 setCertificateCourseTitle(cleanTitle);
                 setCertificateStudentName(studentName);

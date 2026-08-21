@@ -56,7 +56,41 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  const activeLogo = logoUrl && logoUrl.trim() ? logoUrl.trim() : LOGO_DATA_URL;
+  const [embeddedLogo, setEmbeddedLogo] = useState<string>(() => {
+    if (logoUrl && logoUrl.startsWith('data:image/')) return logoUrl;
+    return LOGO_DATA_URL;
+  });
+
+  useEffect(() => {
+    if (logoUrl && logoUrl.trim() && !logoUrl.startsWith('data:image/')) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.referrerPolicy = 'no-referrer';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width || 400;
+          canvas.height = img.naturalHeight || img.height || 180;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            setEmbeddedLogo(dataUrl);
+          }
+        } catch (e) {
+          setEmbeddedLogo(LOGO_DATA_URL);
+        }
+      };
+      img.onerror = () => {
+        setEmbeddedLogo(LOGO_DATA_URL);
+      };
+      img.src = logoUrl.trim();
+    } else if (logoUrl && logoUrl.startsWith('data:image/')) {
+      setEmbeddedLogo(logoUrl);
+    } else {
+      setEmbeddedLogo(LOGO_DATA_URL);
+    }
+  }, [logoUrl]);
 
   // Theme color palette definitions
   const getThemeColors = (theme: string) => {
@@ -459,7 +493,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 <div className="w-72 sm:w-80 shrink-0 flex items-center justify-start pl-6 sm:pl-8 md:pl-10">
                   <div className="h-28 sm:h-32 md:h-36 flex items-center justify-start shrink-0 bg-transparent mt-1">
                     <img 
-                      src={activeLogo} 
+                      src={embeddedLogo || LOGO_DATA_URL} 
                       alt={instituteName || 'Institute Logo'}
                       crossOrigin="anonymous"
                       referrerPolicy="no-referrer"
